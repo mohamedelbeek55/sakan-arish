@@ -324,6 +324,7 @@ export default async function AdminDashboardPage() {
                         propertyId={property.id}
                         currentStatus={property.status}
                         totalBeds={property.total_beds}
+                        rentalType={property.rental_type}
                       />
                     </td>
                     <td className="px-4 py-3">

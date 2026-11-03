@@ -29,7 +29,10 @@ export async function getAllProperties(options?: {
     throw new Error(`تعذر جلب السكنات من قاعدة البيانات: ${error.message}`);
   }
 
-  const list = (data || []) as Property[];
+  const list: Property[] = (data || []).map((row) => ({
+    ...(row as Property),
+    owner_phone: null,
+  }));
 
   // Admin query: attach owner_phone from the private table
   if (options?.forAdmin) {
@@ -58,7 +61,7 @@ export async function getAllProperties(options?: {
 
   // Public query: strictly never select/return owner_phone
   return list.map((item) => {
-    const { owner_phone, ...safeItem } = item as any;
+    const { owner_phone: _hidden, ...safeItem } = item;
     return safeItem as Property;
   });
 }
@@ -81,7 +84,10 @@ export async function getPropertyById(
 
   if (!data) return null;
 
-  const item = data as Property;
+  const item: Property = {
+    ...(data as Property),
+    owner_phone: null,
+  };
 
   // Admin query: fetch owner_phone from private table
   if (options?.forAdmin) {
@@ -102,7 +108,7 @@ export async function getPropertyById(
   }
 
   // Public query: strictly never expose owner_phone
-  const { owner_phone, ...safeItem } = item as any;
+  const { owner_phone: _hidden, ...safeItem } = item;
   return safeItem as Property;
 }
 
@@ -111,10 +117,14 @@ export async function upsertProperty(
 ): Promise<{ success: boolean; property?: Property; error?: string }> {
   try {
     const supabase = await createClient();
-    const { id, owner_phone, whatsapp_clicks, ...rawSupabaseData } = propertyData as any;
+    const { id, owner_phone, whatsapp_clicks, ...rawSupabaseData } = propertyData;
 
-    // Derive status automatically from available_beds
-    const autoStatus = derivePropertyStatus(propertyData.available_beds);
+    // Derive status automatically from available_beds, total_beds, and rental_type
+    const autoStatus = derivePropertyStatus(
+      propertyData.available_beds,
+      propertyData.total_beds,
+      propertyData.rental_type
+    );
     const supabaseData = {
       ...rawSupabaseData,
       status: autoStatus,
@@ -147,22 +157,36 @@ export async function upsertProperty(
       savedProperty = data as Property;
     }
 
-    // Save owner_phone into property_private table only
+    // Save owner_phone into property_private table only, checking for errors
     if (owner_phone !== undefined) {
       const cleanPhone =
         owner_phone && typeof owner_phone === "string" ? owner_phone.trim() : null;
 
       if (cleanPhone) {
-        await supabase.from("property_private").upsert({
+        const { error: privErr } = await supabase.from("property_private").upsert({
           property_id: savedProperty.id,
           owner_phone: cleanPhone,
         });
+
+        if (privErr) {
+          return {
+            success: false,
+            error: `فشل حفظ رقم هاتف المالك في السجلات الخاصة: ${privErr.message}`,
+          };
+        }
         savedProperty.owner_phone = cleanPhone;
       } else {
-        await supabase
+        const { error: delErr } = await supabase
           .from("property_private")
           .delete()
           .eq("property_id", savedProperty.id);
+
+        if (delErr) {
+          return {
+            success: false,
+            error: `فشل تحديث بيانات هاتف المالك: ${delErr.message}`,
+          };
+        }
         savedProperty.owner_phone = null;
       }
     }
@@ -205,7 +229,7 @@ export async function updatePropertyStatus(
     const supabase = await createClient();
     const { data: prop, error: fetchErr } = await supabase
       .from("properties")
-      .select("total_beds")
+      .select("total_beds, rental_type")
       .eq("id", id)
       .single();
 
@@ -229,7 +253,7 @@ export async function updatePropertyStatus(
       available_beds = totalBeds;
     }
 
-    const status = derivePropertyStatus(available_beds);
+    const status = derivePropertyStatus(available_beds, totalBeds, prop.rental_type);
 
     const { error } = await supabase
       .from("properties")

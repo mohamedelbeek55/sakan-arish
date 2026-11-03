@@ -65,10 +65,13 @@ export function getStatusStyles(status: string): string {
 }
 
 export function derivePropertyStatus(
-  availableBeds: number
+  availableBeds: number,
+  totalBeds: number = 1,
+  rentalType?: string
 ): "available" | "one_bed_left" | "booked" {
   if (availableBeds <= 0) return "booked";
-  if (availableBeds === 1) return "one_bed_left";
+  if (availableBeds >= totalBeds) return "available";
+  if (rentalType === "bed" && availableBeds === 1) return "one_bed_left";
   return "available";
 }
 

@@ -20,6 +20,7 @@ interface StatusDropdownProps {
   propertyId: string;
   currentStatus: string;
   totalBeds?: number;
+  rentalType?: string;
   onStatusChange?: (newStatus: string) => void;
 }
 
@@ -29,6 +30,7 @@ export default function StatusDropdown({
   propertyId,
   currentStatus,
   totalBeds = 1,
+  rentalType = "bed",
   onStatusChange,
 }: StatusDropdownProps) {
   const [status, setStatus] = useState(currentStatus);
@@ -39,7 +41,7 @@ export default function StatusDropdown({
       // Calculate available beds according to rule: booked -> 0, one_bed_left -> 1, available -> total_beds
       const availableBeds =
         newStatus === "booked" ? 0 : newStatus === "one_bed_left" ? 1 : totalBeds;
-      const computedStatus = derivePropertyStatus(availableBeds);
+      const computedStatus = derivePropertyStatus(availableBeds, totalBeds, rentalType);
 
       setStatus(computedStatus);
       await updateStatusAction(propertyId, newStatus);

@@ -152,7 +152,19 @@ const propertyServerSchema = z
       .max(10, "سعة الغرفة غير منطقية")
       .optional()
       .nullable(),
-    last_verified_at: z.string().optional().nullable(),
+    last_verified_at: z
+      .string()
+      .optional()
+      .nullable()
+      .refine(
+        (val) => {
+          if (!val || !val.trim()) return true;
+          const d = new Date(val);
+          return !isNaN(d.getTime());
+        },
+        { message: "تاريخ المعاينة يجب أن يكون بصيغة تاريخ ISO صالحة" }
+      )
+      .transform((val) => (val && val.trim() ? new Date(val).toISOString() : null)),
     owner_phone: z
       .string()
       .optional()

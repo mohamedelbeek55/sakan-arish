@@ -48,7 +48,7 @@
 5. توجّه إلى **Authentication > Providers > Email** وقم بإيقاف **Enable Sign Up** لضمان عدم إنشاء حسابات غير مصرح بها.
 
 ### 2. المتغيرات البيئية المطلوبة (Required Environment Variables)
-قم بإنشاء أو تعديل الملف `.env.local` في جذر المشروع وضبط المتغيرات البيئية التالية:
+قم بإنشاء أو تعديل الملف `.env.local` في جذر المشروع وضبط المتغيرات البيئية التالية فقط:
 
 ```env
 # رابط مشروع Supabase الخاص بك
@@ -57,15 +57,14 @@ NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 # المفتاح العام (Anon Key) للواجهة الأمامية
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
-# مفتاح الخدمة الداخلي (Service Role Key) لإدارة الـ Storage والصلاحيات العليا على الخادم
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-
 # رقم واتساب الإدارة لاستقبال رسائل الحجز والاستفسارات (بالصيغة الدولية دون علامة +، مثل: 201271759984)
 NEXT_PUBLIC_ADMIN_WHATSAPP_NUMBER=201271759984
 
-# البريد الإلكتروني المعتمد للمشرف (يجب أن يتطابق مع الحساب المسجل في Supabase Auth وجدول public.admins)
+# البريد الإلكتروني المعتمد للمشرف (يجب أن يتطابق تماماً مع الحساب المسجل في Supabase Auth وجدول public.admins)
 ADMIN_EMAIL=your-admin-email@example.com
 ```
+
+> **ملاحظة أمنية:** لا تضع `SUPABASE_SERVICE_ROLE_KEY` في بيئة الإنتاج على Vercel؛ التطبيق مصمم وفق مبدأ الحد الأدنى من الصلاحيات (Least Privilege) ويعتمد على صلاحيات المستخدم الموثق وسياسات الـ RLS.
 
 ### 3. تشغيل خادم التطوير محلياً
 ```bash

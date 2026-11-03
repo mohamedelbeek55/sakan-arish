@@ -206,7 +206,11 @@ export default function PropertyForm({ property }: PropertyFormProps) {
   const watchedUtilities = watch("utilities_included");
 
   // Automatically derive property status
-  const derivedStatus = derivePropertyStatus(watchedAvailableBeds);
+  const derivedStatus = derivePropertyStatus(
+    watchedAvailableBeds,
+    watchedTotalBeds,
+    watchedRentalType
+  );
 
   const toggleAmenity = (amenity: string) => {
     setSelectedAmenities((prev) =>
@@ -597,25 +601,65 @@ export default function PropertyForm({ property }: PropertyFormProps) {
           </div>
         </div>
 
-        {/* Checkboxes: Furnished & Utilities Included */}
-        <div className="pt-2 flex flex-wrap gap-6 border-t border-slate-100">
-          <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700">
-            <Checkbox
-              checked={!!watchedFurnished}
-              onCheckedChange={(checked) => setValue("furnished", !!checked)}
-            />
-            <span>مفروشة بالكامل (أثاث، مراتب، أجهزة)</span>
-          </label>
-
-          <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700">
-            <Checkbox
-              checked={!!watchedUtilities}
-              onCheckedChange={(checked) =>
-                setValue("utilities_included", !!checked)
+        {/* Tri-state: Furnished & Utilities Included */}
+        <div className="pt-2 grid gap-4 sm:grid-cols-2 border-t border-slate-100">
+          <div className="space-y-1.5">
+            <Label>حالة الفرش والأثاث</Label>
+            <Select
+              value={
+                watchedFurnished === true
+                  ? "true"
+                  : watchedFurnished === false
+                  ? "false"
+                  : "unspecified"
               }
-            />
-            <span>السعر شامل الفواتير (كهرباء / مياه / غاز / إنترنت)</span>
-          </label>
+              onValueChange={(val) => {
+                setValue(
+                  "furnished",
+                  val === "true" ? true : val === "false" ? false : null,
+                  { shouldDirty: true }
+                );
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="اختر حالة الفرش" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unspecified">غير محدد (إخفاء من الإعلان)</SelectItem>
+                <SelectItem value="true">مفروشة بالكامل (أثاث وأجهزة)</SelectItem>
+                <SelectItem value="false">غير مفروشة</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>الفواتير والخدمات</Label>
+            <Select
+              value={
+                watchedUtilities === true
+                  ? "true"
+                  : watchedUtilities === false
+                  ? "false"
+                  : "unspecified"
+              }
+              onValueChange={(val) => {
+                setValue(
+                  "utilities_included",
+                  val === "true" ? true : val === "false" ? false : null,
+                  { shouldDirty: true }
+                );
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="اختر حالة الفواتير" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unspecified">غير محدد (إخفاء من الإعلان)</SelectItem>
+                <SelectItem value="true">شامل الفواتير (كهرباء / مياه / إنترنت)</SelectItem>
+                <SelectItem value="false">الفواتير منفصلة (على الطلاب)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Derived status info box */}
