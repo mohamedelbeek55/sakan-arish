@@ -30,8 +30,8 @@ export interface Property {
   walking_minutes_to_university?: number | null;
   maps_url?: string | null;
   floor?: number | null;
-  furnished?: boolean;
-  utilities_included?: boolean;
+  furnished?: boolean | null;
+  utilities_included?: boolean | null;
   deposit?: number | null;
   contract_months?: number | null;
   students_per_room?: number | null;

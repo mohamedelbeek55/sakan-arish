@@ -9,14 +9,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Check, Loader2 } from "lucide-react";
-import { getStatusLabel, getStatusStyles } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/client";
-
+import {
+  getStatusLabel,
+  getStatusStyles,
+  derivePropertyStatus,
+} from "@/lib/utils";
 import { updateStatusAction } from "@/app/actions/property";
 
 interface StatusDropdownProps {
   propertyId: string;
   currentStatus: string;
+  totalBeds?: number;
   onStatusChange?: (newStatus: string) => void;
 }
 
@@ -25,6 +28,7 @@ const statuses = ["available", "one_bed_left", "booked"] as const;
 export default function StatusDropdown({
   propertyId,
   currentStatus,
+  totalBeds = 1,
   onStatusChange,
 }: StatusDropdownProps) {
   const [status, setStatus] = useState(currentStatus);
@@ -32,9 +36,14 @@ export default function StatusDropdown({
 
   const handleStatusChange = (newStatus: string) => {
     startTransition(async () => {
-      setStatus(newStatus);
+      // Calculate available beds according to rule: booked -> 0, one_bed_left -> 1, available -> total_beds
+      const availableBeds =
+        newStatus === "booked" ? 0 : newStatus === "one_bed_left" ? 1 : totalBeds;
+      const computedStatus = derivePropertyStatus(availableBeds);
+
+      setStatus(computedStatus);
       await updateStatusAction(propertyId, newStatus);
-      onStatusChange?.(newStatus);
+      onStatusChange?.(computedStatus);
     });
   };
 
@@ -59,7 +68,7 @@ export default function StatusDropdown({
           <DropdownMenuItem
             key={s}
             onClick={() => handleStatusChange(s)}
-            className="gap-2"
+            className="gap-2 cursor-pointer"
           >
             {status === s && <Check className="h-3.5 w-3.5 text-teal-700" />}
             <span className={status === s ? "font-medium" : ""}>

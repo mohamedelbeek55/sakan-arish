@@ -10,7 +10,7 @@ import {
 } from "@/lib/submissions-store";
 import { requireAdmin } from "@/lib/auth";
 
-// Basic in-memory rate limiter: max 4 submissions per 15 minutes per IP
+// Note: This in-memory rate limiter is best-effort only (single node/serverless instance).
 const rateLimitMap = new Map<string, { count: number; firstAt: number }>();
 
 function checkRateLimit(ip: string): boolean {
@@ -37,76 +37,83 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
-const submissionSchema = z.object({
-  owner_name: z
-    .string({ message: "اسم صاحب السكن أو المسؤول مطلوب" })
-    .trim()
-    .min(2, "الاسم يجب أن يكون حرفين على الأقل")
-    .max(100, "الاسم طويل جداً"),
-  owner_phone: z
-    .string({ message: "رقم الهاتف / الواتساب مطلوب" })
-    .trim()
-    .min(10, "رقم الهاتف غير صالح")
-    .max(20, "رقم الهاتف غير صالح"),
-  title: z
-    .string({ message: "عنوان الإعلان المقترح مطلوب" })
-    .trim()
-    .min(3, "العنوان يجب أن يكون 3 أحرف على الأقل")
-    .max(200, "العنوان طويل جداً"),
-  area: z.enum(["al_masaeed", "al_dahiya"], {
-    message: "يرجى تحديد المنطقة (المساعيد أو الضاحية)",
-  }),
-  gender: z.enum(["male", "female"], {
-    message: "يرجى تحديد نوع السكن (شباب أو بنات)",
-  }),
-  rental_type: z.enum(["bed", "room", "full_apartment"], {
-    message: "يرجى تحديد نوع الإيجار",
-  }),
-  price: z
-    .number({ message: "السعر المتوقع مطلوب" })
-    .positive("السعر يجب أن يكون أكبر من صفر"),
-  rooms_count: z
-    .number()
-    .int()
-    .min(1, "عدد الغرف يجب أن يكون 1 على الأقل")
-    .default(1),
-  total_beds: z
-    .number()
-    .int()
-    .min(1, "إجمالي الأسرّة يجب أن يكون 1 على الأقل")
-    .default(1),
-  available_beds: z
-    .number()
-    .int()
-    .min(0, "الأسرّة المتاحة لا يمكن أن تكون سالبة")
-    .default(1),
-  walking_minutes_to_university: z
-    .number()
-    .int()
-    .min(0)
-    .max(180)
-    .optional()
-    .nullable(),
-  location_desc: z
-    .string()
-    .optional()
-    .nullable()
-    .transform((val) => (val?.trim() ? val.trim() : null)),
-  description: z
-    .string()
-    .optional()
-    .nullable()
-    .transform((val) => (val?.trim() ? val.trim() : null)),
-  // Honeypot field: must be empty
-  hp_website: z.string().optional().nullable(),
-});
+const submissionSchema = z
+  .object({
+    owner_name: z
+      .string({ message: "اسم صاحب السكن أو المسؤول مطلوب" })
+      .trim()
+      .min(2, "الاسم يجب أن يكون حرفين على الأقل")
+      .max(100, "الاسم طويل جداً"),
+    owner_phone: z
+      .string({ message: "رقم الهاتف / الواتساب مطلوب" })
+      .trim()
+      .min(10, "رقم الهاتف غير صالح")
+      .max(20, "رقم الهاتف غير صالح"),
+    title: z
+      .string({ message: "عنوان الإعلان المقترح مطلوب" })
+      .trim()
+      .min(3, "العنوان يجب أن يكون 3 أحرف على الأقل")
+      .max(200, "العنوان طويل جداً"),
+    area: z.enum(["al_masaeed", "al_dahiya"], {
+      message: "يرجى تحديد المنطقة (المساعيد أو الضاحية)",
+    }),
+    gender: z.enum(["male", "female"], {
+      message: "يرجى تحديد نوع السكن (شباب أو بنات)",
+    }),
+    rental_type: z.enum(["bed", "room", "full_apartment"], {
+      message: "يرجى تحديد نوع الإيجار",
+    }),
+    price: z
+      .number({ message: "السعر المتوقع مطلوب" })
+      .positive("السعر يجب أن يكون أكبر من صفر"),
+    rooms_count: z
+      .number()
+      .int()
+      .min(1, "عدد الغرف يجب أن يكون 1 على الأقل")
+      .default(1),
+    total_beds: z
+      .number()
+      .int()
+      .min(1, "إجمالي الأسرّة يجب أن يكون 1 على الأقل")
+      .default(1),
+    available_beds: z
+      .number()
+      .int()
+      .min(0, "الأسرّة المتاحة لا يمكن أن تكون سالبة")
+      .default(1),
+    walking_minutes_to_university: z
+      .number()
+      .int()
+      .min(0)
+      .max(180)
+      .optional()
+      .nullable(),
+    location_desc: z
+      .string()
+      .max(500, "وصف الموقع لا يجب أن يتجاوز 500 حرف")
+      .optional()
+      .nullable()
+      .transform((val) => (val?.trim() ? val.trim() : null)),
+    description: z
+      .string()
+      .max(2000, "الوصف لا يجب أن يتجاوز 2000 حرف")
+      .optional()
+      .nullable()
+      .transform((val) => (val?.trim() ? val.trim() : null)),
+    // Honeypot field: must be empty
+    hp_website: z.string().optional().nullable(),
+  })
+  .refine((data) => data.available_beds <= data.total_beds, {
+    message: "عدد الأسرّة المتاحة لا يمكن أن يتجاوز إجمالي الأسرّة",
+    path: ["available_beds"],
+  });
 
 export async function submitPropertyAction(rawData: unknown): Promise<{
   success: boolean;
   error?: string;
   fieldErrors?: Record<string, string[]>;
 }> {
-  // 1. Rate limiting by IP header
+  // 1. Rate limiting by IP header (best-effort)
   try {
     const h = await headers();
     const forwardedFor = h.get("x-forwarded-for");

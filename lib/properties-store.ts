@@ -31,15 +31,36 @@ export async function getAllProperties(options?: {
 
   const list = (data || []) as Property[];
 
-  // Defense-in-depth: Never expose owner_phone publicly
-  if (!options?.forAdmin) {
-    return list.map((item) => {
-      const { owner_phone, ...safeItem } = item;
-      return safeItem as Property;
-    });
+  // Admin query: attach owner_phone from the private table
+  if (options?.forAdmin) {
+    try {
+      const { data: privateRows } = await supabase
+        .from("property_private")
+        .select("property_id, owner_phone");
+
+      if (privateRows && privateRows.length > 0) {
+        const phoneMap = new Map<string, string | null>(
+          privateRows.map((r: { property_id: string; owner_phone: string | null }) => [
+            r.property_id,
+            r.owner_phone,
+          ])
+        );
+        return list.map((item) => ({
+          ...item,
+          owner_phone: phoneMap.get(item.id) || null,
+        }));
+      }
+    } catch (privErr) {
+      console.warn("Could not fetch property_private:", privErr);
+    }
+    return list;
   }
 
-  return list;
+  // Public query: strictly never select/return owner_phone
+  return list.map((item) => {
+    const { owner_phone, ...safeItem } = item as any;
+    return safeItem as Property;
+  });
 }
 
 export async function getPropertyById(
@@ -62,13 +83,27 @@ export async function getPropertyById(
 
   const item = data as Property;
 
-  // Defense-in-depth: Never expose owner_phone publicly
-  if (!options?.forAdmin) {
-    const { owner_phone, ...safeItem } = item;
-    return safeItem as Property;
+  // Admin query: fetch owner_phone from private table
+  if (options?.forAdmin) {
+    try {
+      const { data: priv } = await supabase
+        .from("property_private")
+        .select("owner_phone")
+        .eq("property_id", id)
+        .maybeSingle();
+
+      return {
+        ...item,
+        owner_phone: priv?.owner_phone || null,
+      };
+    } catch {
+      return item;
+    }
   }
 
-  return item;
+  // Public query: strictly never expose owner_phone
+  const { owner_phone, ...safeItem } = item as any;
+  return safeItem as Property;
 }
 
 export async function upsertProperty(
@@ -76,7 +111,7 @@ export async function upsertProperty(
 ): Promise<{ success: boolean; property?: Property; error?: string }> {
   try {
     const supabase = await createClient();
-    const { id, ...rawSupabaseData } = propertyData;
+    const { id, owner_phone, whatsapp_clicks, ...rawSupabaseData } = propertyData as any;
 
     // Derive status automatically from available_beds
     const autoStatus = derivePropertyStatus(propertyData.available_beds);
@@ -84,6 +119,8 @@ export async function upsertProperty(
       ...rawSupabaseData,
       status: autoStatus,
     };
+
+    let savedProperty: Property;
 
     if (id) {
       const { data, error } = await supabase
@@ -96,7 +133,7 @@ export async function upsertProperty(
       if (error) {
         return { success: false, error: error.message };
       }
-      return { success: true, property: data as Property };
+      savedProperty = data as Property;
     } else {
       const { data, error } = await supabase
         .from("properties")
@@ -107,8 +144,30 @@ export async function upsertProperty(
       if (error) {
         return { success: false, error: error.message };
       }
-      return { success: true, property: data as Property };
+      savedProperty = data as Property;
     }
+
+    // Save owner_phone into property_private table only
+    if (owner_phone !== undefined) {
+      const cleanPhone =
+        owner_phone && typeof owner_phone === "string" ? owner_phone.trim() : null;
+
+      if (cleanPhone) {
+        await supabase.from("property_private").upsert({
+          property_id: savedProperty.id,
+          owner_phone: cleanPhone,
+        });
+        savedProperty.owner_phone = cleanPhone;
+      } else {
+        await supabase
+          .from("property_private")
+          .delete()
+          .eq("property_id", savedProperty.id);
+        savedProperty.owner_phone = null;
+      }
+    }
+
+    return { success: true, property: savedProperty };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "فشلت العملية في قاعدة البيانات";
     return { success: false, error: msg };
@@ -121,23 +180,15 @@ export async function recordWhatsAppClick(
   try {
     const supabase = await createClient();
 
-    // 1. Record event row in property_clicks
-    await supabase.from("property_clicks").insert({
+    // Insert single event row in property_clicks (no counter column read-modify-write)
+    const { error } = await supabase.from("property_clicks").insert({
       property_id: propertyId,
     });
 
-    // 2. Increment counter on the property record
-    const { data: currentProp } = await supabase
-      .from("properties")
-      .select("whatsapp_clicks")
-      .eq("id", propertyId)
-      .maybeSingle();
-
-    const currentCount = currentProp?.whatsapp_clicks || 0;
-    await supabase
-      .from("properties")
-      .update({ whatsapp_clicks: currentCount + 1 })
-      .eq("id", propertyId);
+    if (error) {
+      console.warn("Could not insert into property_clicks:", error);
+      return { success: false };
+    }
 
     return { success: true };
   } catch (e) {
@@ -152,9 +203,40 @@ export async function updatePropertyStatus(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = await createClient();
+    const { data: prop, error: fetchErr } = await supabase
+      .from("properties")
+      .select("total_beds")
+      .eq("id", id)
+      .single();
+
+    if (fetchErr || !prop) {
+      return { success: false, error: "السكن غير موجود" };
+    }
+
+    const totalBeds = prop.total_beds || 1;
+    let available_beds = 0;
+
+    // booked -> 0, one_bed_left -> 1, available -> total_beds
+    if (newStatus === "booked") {
+      available_beds = 0;
+    } else if (newStatus === "one_bed_left") {
+      available_beds = 1;
+    } else {
+      available_beds = totalBeds;
+    }
+
+    if (available_beds > totalBeds) {
+      available_beds = totalBeds;
+    }
+
+    const status = derivePropertyStatus(available_beds);
+
     const { error } = await supabase
       .from("properties")
-      .update({ status: newStatus })
+      .update({
+        available_beds,
+        status,
+      })
       .eq("id", id);
 
     if (error) {
@@ -196,7 +278,7 @@ export async function deleteProperty(
       }
     }
 
-    // 3. Delete property record from DB
+    // 3. Delete property record from DB (property_private cascades automatically)
     const { error } = await supabase.from("properties").delete().eq("id", id);
 
     if (error) {

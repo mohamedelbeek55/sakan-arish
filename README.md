@@ -36,22 +36,36 @@
 
 ### 1. إعداد قاعدة البيانات في Supabase
 1. أنشئ مشروعاً جديداً على [Supabase](https://supabase.com).
-2. توجّه إلى **SQL Editor**، وقم بنسخ وتنفيذ محتويات الملف:
+2. توجّه إلى **SQL Editor**، وقم بنسخ وتنفيذ محتويات ملف الترحيل الأمني الكامل:
    ```
    supabase/migration.sql
    ```
-3. توجّه إلى **Storage** وأنشئ Bucket باسم `property-images` واجعله **Public**.
-4. توجّه إلى **Authentication > Users** وأنشئ حساباً جديداً للمشرف (Admin User) بإدخال بريد إلكتروني وكلمة مرور.
+3. أضف بريدك الإلكتروني كمشرف في جدول `public.admins` عبر الـ SQL Editor:
+   ```sql
+   INSERT INTO public.admins (email) VALUES ('your-admin-email@example.com') ON CONFLICT DO NOTHING;
+   ```
+4. توجّه إلى **Authentication > Users** وأنشئ حساباً جديداً للمشرف بنفس البريد الإلكتروني وكلمة المرور.
+5. توجّه إلى **Authentication > Providers > Email** وقم بإيقاف **Enable Sign Up** لضمان عدم إنشاء حسابات غير مصرح بها.
 
-### 2. ضبط المتغيرات البيئية
-قم بفتح الملف `.env.local` وضع بيانات مشروعك في Supabase ورقم الواتساب الخاص بالاستفسارات:
+### 2. المتغيرات البيئية المطلوبة (Required Environment Variables)
+قم بإنشاء أو تعديل الملف `.env.local` في جذر المشروع وضبط المتغيرات البيئية التالية:
+
 ```env
+# رابط مشروع Supabase الخاص بك
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-NEXT_PUBLIC_ADMIN_WHATSAPP_NUMBER=201000000000
+
+# المفتاح العام (Anon Key) للواجهة الأمامية
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+# مفتاح الخدمة الداخلي (Service Role Key) لإدارة الـ Storage والصلاحيات العليا على الخادم
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+# رقم واتساب الإدارة لاستقبال رسائل الحجز والاستفسارات (بالصيغة الدولية دون علامة +، مثل: 201271759984)
+NEXT_PUBLIC_ADMIN_WHATSAPP_NUMBER=201271759984
+
+# البريد الإلكتروني المعتمد للمشرف (يجب أن يتطابق مع الحساب المسجل في Supabase Auth وجدول public.admins)
+ADMIN_EMAIL=your-admin-email@example.com
 ```
-*(ملاحظة: رقم الواتساب بالصيغة الدولية دون علامة +، مثل: `201012345678`)*
 
 ### 3. تشغيل خادم التطوير محلياً
 ```bash

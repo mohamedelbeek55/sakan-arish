@@ -250,19 +250,23 @@ export default async function PropertyDetailPage({
                     </span>
                   </div>
                 ) : null}
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-50">
-                  <CheckCircle2 className="h-4 w-4 text-teal-600" />
-                  <span>{p.furnished ? "مفروشة بالكامل" : "غير مفروشة"}</span>
-                </div>
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-50">
-                  <CheckCircle2 className="h-4 w-4 text-teal-600" />
-                  <span>
-                    {p.utilities_included
-                      ? "شامل الفواتير"
-                      : "الفواتير منفصلة"}
-                  </span>
-                </div>
-                {p.students_per_room ? (
+                {p.furnished !== null && p.furnished !== undefined ? (
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-50">
+                    <CheckCircle2 className="h-4 w-4 text-teal-600" />
+                    <span>{p.furnished ? "مفروشة بالكامل" : "غير مفروشة"}</span>
+                  </div>
+                ) : null}
+                {p.utilities_included !== null && p.utilities_included !== undefined ? (
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-50">
+                    <CheckCircle2 className="h-4 w-4 text-teal-600" />
+                    <span>
+                      {p.utilities_included
+                        ? "شامل الفواتير"
+                        : "الفواتير منفصلة"}
+                    </span>
+                  </div>
+                ) : null}
+                {p.students_per_room !== null && p.students_per_room !== undefined ? (
                   <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-50">
                     <Users className="h-4 w-4 text-slate-500" />
                     <span>سعة الغرفة: {p.students_per_room} طلاب</span>
@@ -276,7 +280,7 @@ export default async function PropertyDetailPage({
                     </span>
                   </div>
                 ) : null}
-                {p.contract_months ? (
+                {p.contract_months !== null && p.contract_months !== undefined ? (
                   <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-50">
                     <Calendar className="h-4 w-4 text-slate-500" />
                     <span>مدة العقد: {p.contract_months} شهر</span>

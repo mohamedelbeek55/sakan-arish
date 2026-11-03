@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { z } from "zod";
 import {
   upsertProperty,
@@ -12,6 +13,33 @@ import {
 import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { Property } from "@/components/property/PropertyCard";
+
+// Simple in-memory per-IP click throttle: max 12 clicks per minute per IP
+const clickThrottleMap = new Map<string, { count: number; firstAt: number }>();
+
+function checkClickThrottle(ip: string): boolean {
+  const now = Date.now();
+  const windowMs = 60 * 1000;
+  const maxClicks = 12;
+
+  const record = clickThrottleMap.get(ip);
+  if (!record) {
+    clickThrottleMap.set(ip, { count: 1, firstAt: now });
+    return true;
+  }
+
+  if (now - record.firstAt > windowMs) {
+    clickThrottleMap.set(ip, { count: 1, firstAt: now });
+    return true;
+  }
+
+  if (record.count >= maxClicks) {
+    return false;
+  }
+
+  record.count += 1;
+  return true;
+}
 
 const propertyServerSchema = z
   .object({
@@ -103,8 +131,8 @@ const propertyServerSchema = z
       .max(40, "الدور غير صالح")
       .optional()
       .nullable(),
-    furnished: z.boolean().default(true),
-    utilities_included: z.boolean().default(false),
+    furnished: z.boolean().optional().nullable(),
+    utilities_included: z.boolean().optional().nullable(),
     deposit: z
       .number()
       .min(0, "مبلغ التأمين لا يمكن أن يكون سالباً")
@@ -196,11 +224,17 @@ export async function savePropertyAction(rawData: unknown): Promise<{
     return { success: false, error: msg };
   }
 
-  // 4. Save to Supabase
+  // 4. Save to Supabase (upsertProperty handles properties + property_private separation)
   const result = await upsertProperty({
     ...data,
     status: data.status || "available",
     location_desc: data.location_desc || "",
+    furnished: data.furnished ?? null,
+    utilities_included: data.utilities_included ?? null,
+    deposit: data.deposit ?? null,
+    contract_months: data.contract_months ?? null,
+    students_per_room: data.students_per_room ?? null,
+    last_verified_at: data.last_verified_at ?? null,
   });
 
   if (!result.success) {
@@ -234,6 +268,7 @@ export async function updateStatusAction(
     return { success: false, error: "حالة السكن المحددة غير صالحة" };
   }
 
+  // Set available_beds (booked -> 0, one_bed_left -> 1, available -> total_beds) and derive status
   const result = await updatePropertyStatus(id, status);
 
   if (result.success) {
@@ -272,6 +307,25 @@ export async function recordWhatsAppClickAction(
 ): Promise<{ success: boolean }> {
   if (!propertyId || typeof propertyId !== "string") {
     return { success: false };
+  }
+
+  // Validate UUID format to prevent non-UUID inputs
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(propertyId)) {
+    return { success: false };
+  }
+
+  // Per-IP throttle
+  try {
+    const h = await headers();
+    const forwardedFor = h.get("x-forwarded-for");
+    const ip = forwardedFor ? forwardedFor.split(",")[0].trim() : "unknown_client";
+    if (!checkClickThrottle(ip)) {
+      return { success: false };
+    }
+  } catch {
+    // Proceed if headers cannot be read
   }
 
   const result = await recordWhatsAppClick(propertyId);

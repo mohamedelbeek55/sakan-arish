@@ -43,16 +43,34 @@ export default async function AdminDashboardPage() {
   ).length;
   const bookedCount = listings.filter((p) => p.status === "booked").length;
 
-  // Total WhatsApp clicks
-  const totalClicks = listings.reduce(
-    (acc, p) => acc + (p.whatsapp_clicks || 0),
-    0
-  );
+  // Compute WhatsApp clicks via grouped query on property_clicks
+  const supabase = await createClient();
+  let totalClicks = 0;
+  const clicksMap = new Map<string, number>();
+
+  try {
+    const { data: clicksData } = await supabase
+      .from("property_clicks")
+      .select("property_id");
+
+    if (clicksData && clicksData.length > 0) {
+      totalClicks = clicksData.length;
+      for (const row of clicksData) {
+        if (row.property_id) {
+          clicksMap.set(
+            row.property_id,
+            (clicksMap.get(row.property_id) || 0) + 1
+          );
+        }
+      }
+    }
+  } catch (clicksErr) {
+    console.warn("Could not fetch property_clicks analytics:", clicksErr);
+  }
 
   // Check pending submissions count
   let pendingSubmissionsCount = 0;
   try {
-    const supabase = await createClient();
     const { count } = await supabase
       .from("submissions")
       .select("*", { count: "exact", head: true })
@@ -282,7 +300,7 @@ export default async function AdminDashboardPage() {
                     </td>
                     <td className="px-4 py-3">
                       <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-xs font-bold text-emerald-800">
-                        📞 {property.whatsapp_clicks || 0}
+                        📞 {clicksMap.get(property.id) || 0}
                       </span>
                     </td>
                     <td className="px-4 py-3 hidden xl:table-cell text-xs font-mono text-slate-600">
@@ -305,6 +323,7 @@ export default async function AdminDashboardPage() {
                       <StatusDropdown
                         propertyId={property.id}
                         currentStatus={property.status}
+                        totalBeds={property.total_beds}
                       />
                     </td>
                     <td className="px-4 py-3">

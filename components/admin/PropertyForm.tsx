@@ -14,6 +14,7 @@ import {
   MapPin,
   Building,
   Shield,
+  ShieldCheck,
   Phone,
   Sparkles,
 } from "lucide-react";
@@ -70,8 +71,8 @@ const propertySchema = z
       .nullable(),
     maps_url: z.string().optional().or(z.literal("")),
     floor: z.number().int().min(-2).max(40).optional().nullable(),
-    furnished: z.boolean().default(true),
-    utilities_included: z.boolean().default(false),
+    furnished: z.boolean().optional().nullable(),
+    utilities_included: z.boolean().optional().nullable(),
     deposit: z.number().min(0).optional().nullable(),
     contract_months: z.number().int().min(1).max(36).optional().nullable(),
     students_per_room: z.number().int().min(1).max(10).optional().nullable(),
@@ -153,6 +154,9 @@ export default function PropertyForm({ property }: PropertyFormProps) {
   const [uploading, setUploading] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isVerified, setIsVerified] = useState<boolean>(
+    !!property?.last_verified_at
+  );
 
   const {
     register,
@@ -183,11 +187,11 @@ export default function PropertyForm({ property }: PropertyFormProps) {
         property?.walking_minutes_to_university ?? null,
       maps_url: property?.maps_url || "",
       floor: property?.floor ?? null,
-      furnished: property?.furnished ?? true,
-      utilities_included: property?.utilities_included ?? false,
+      furnished: property?.furnished ?? null,
+      utilities_included: property?.utilities_included ?? null,
       deposit: property?.deposit ?? null,
-      contract_months: property?.contract_months ?? 10,
-      students_per_room: property?.students_per_room ?? 2,
+      contract_months: property?.contract_months ?? null,
+      students_per_room: property?.students_per_room ?? null,
       owner_phone: property?.owner_phone || "",
     },
   });
@@ -319,6 +323,9 @@ export default function PropertyForm({ property }: PropertyFormProps) {
         maps_url: cleanMapsUrl,
         description: data.description || null,
         owner_phone: data.owner_phone?.trim() || null,
+        last_verified_at: isVerified
+          ? property?.last_verified_at || new Date().toISOString()
+          : null,
         id: property?.id,
       };
 
@@ -594,7 +601,7 @@ export default function PropertyForm({ property }: PropertyFormProps) {
         <div className="pt-2 flex flex-wrap gap-6 border-t border-slate-100">
           <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700">
             <Checkbox
-              checked={watchedFurnished}
+              checked={!!watchedFurnished}
               onCheckedChange={(checked) => setValue("furnished", !!checked)}
             />
             <span>مفروشة بالكامل (أثاث، مراتب، أجهزة)</span>
@@ -602,7 +609,7 @@ export default function PropertyForm({ property }: PropertyFormProps) {
 
           <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700">
             <Checkbox
-              checked={watchedUtilities}
+              checked={!!watchedUtilities}
               onCheckedChange={(checked) =>
                 setValue("utilities_included", !!checked)
               }
@@ -650,6 +657,26 @@ export default function PropertyForm({ property }: PropertyFormProps) {
             className="bg-white text-right"
             {...register("owner_phone")}
           />
+        </div>
+
+        {/* Verification Checkbox - Explicit admin-only action */}
+        <div className="pt-3 border-t border-amber-200/80">
+          <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-amber-950">
+            <Checkbox
+              checked={isVerified}
+              onCheckedChange={(checked) => setIsVerified(!!checked)}
+            />
+            <span className="flex items-center gap-1.5">
+              <ShieldCheck className="h-4 w-4 text-emerald-600" />
+              تمت المعاينة (توثيق السكن والتأكد من بياناته على أرض الواقع)
+            </span>
+          </label>
+          {isVerified && property?.last_verified_at && (
+            <p className="text-[11px] text-amber-800/80 mt-1 mr-6">
+              تاريخ المعاينة المسجل:{" "}
+              {new Date(property.last_verified_at).toLocaleDateString("ar-EG")}
+            </p>
+          )}
         </div>
       </div>
 
