@@ -27,6 +27,11 @@ export default function Navbar() {
   const isAdminRoute = pathname?.startsWith("/admin");
   const isLoginPage = pathname === "/admin/login";
 
+  const whatsappNumber = process.env.NEXT_PUBLIC_ADMIN_WHATSAPP_NUMBER?.trim() || "";
+  const ownerWhatsAppUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+    "السلام عليكم، أنا صاحب سكن وعايز أعلن عن شقة متاحة عندي للطلبة."
+  )}`;
+
   useEffect(() => {
     const supabase = createClient();
 
@@ -322,7 +327,12 @@ export default function Navbar() {
             </Button>
           </Link>
 
-          <Link href="/list-your-property" className="mr-1">
+          <a
+            href={ownerWhatsAppUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mr-1"
+          >
             <Button
               size="sm"
               variant="outline"
@@ -331,7 +341,7 @@ export default function Navbar() {
               <Building2 className="h-4 w-4 text-[#0369A1]" />
               أعلن عن سكنك
             </Button>
-          </Link>
+          </a>
 
           {isAdmin && (
             <div className="flex items-center gap-2 mr-2 pr-2 border-r border-[#EBE6DC]">
@@ -391,8 +401,10 @@ export default function Navbar() {
               </Button>
             </Link>
 
-            <Link
-              href="/list-your-property"
+            <a
+              href={ownerWhatsAppUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               onClick={() => setMobileMenuOpen(false)}
             >
               <Button
@@ -400,9 +412,9 @@ export default function Navbar() {
                 className="w-full justify-start gap-2 border-sky-200 text-[#0369A1] bg-sky-50/70 hover:bg-sky-100 font-bold rounded-xl text-xs"
               >
                 <Building2 className="h-4 w-4 text-[#0369A1]" />
-                صاحب سكن؟ أعلن معنا
+                أعلن عن سكنك
               </Button>
-            </Link>
+            </a>
 
             {isAdmin && (
               <div className="pt-2 border-t border-[#EBE6DC] flex flex-col gap-2">
