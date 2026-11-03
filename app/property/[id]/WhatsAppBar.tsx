@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { buildWhatsAppUrl, formatPrice } from "@/lib/utils";
 import { recordWhatsAppClickAction } from "@/app/actions/property";
 
@@ -10,6 +11,7 @@ interface WhatsAppBarProps {
   title?: string;
   location: string;
   price: number;
+  propertyUrl?: string;
 }
 
 export default function WhatsAppBar({
@@ -19,7 +21,20 @@ export default function WhatsAppBar({
   title,
   location,
   price,
+  propertyUrl = "",
 }: WhatsAppBarProps) {
+  const [whatsappUrl, setWhatsappUrl] = useState(() =>
+    buildWhatsAppUrl(phoneNumber, code, location, price, title, propertyUrl)
+  );
+
+  useEffect(() => {
+    const currentUrl =
+      typeof window !== "undefined" ? window.location.href : propertyUrl;
+    setWhatsappUrl(
+      buildWhatsAppUrl(phoneNumber, code, location, price, title, currentUrl)
+    );
+  }, [phoneNumber, code, location, price, title, propertyUrl]);
+
   const handleClick = () => {
     if (propertyId) {
       try {
@@ -40,7 +55,7 @@ export default function WhatsAppBar({
           </p>
         </div>
         <a
-          href={buildWhatsAppUrl(phoneNumber, code, location, price, title)}
+          href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
           onClick={handleClick}

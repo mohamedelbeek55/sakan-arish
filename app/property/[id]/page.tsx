@@ -112,12 +112,17 @@ export default async function PropertyDetailPage({
   }
 
   const whatsappNumber = getWhatsAppNumber();
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://sakan-arish.vercel.app";
+  const propertyUrl = `${siteUrl}/property/${p.id}`;
+
   const whatsappBookingUrl = buildBookingWhatsAppUrl({
     phoneNumber: whatsappNumber,
     code: p.code,
     title: p.title,
     location: p.location_desc,
     price: p.price,
+    propertyUrl,
   });
 
   return (
@@ -336,6 +341,12 @@ export default async function PropertyDetailPage({
             <div className="hidden lg:block">
               <WhatsAppBookingButton
                 propertyId={p.id}
+                phoneNumber={whatsappNumber}
+                code={p.code}
+                title={p.title}
+                location={p.location_desc}
+                price={p.price}
+                propertyUrl={propertyUrl}
                 whatsappUrl={whatsappBookingUrl}
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-6 py-4 text-base font-bold text-white transition hover:bg-[#20BD5A] shadow-md hover:shadow-lg transform active:scale-[0.99] cursor-pointer"
               >
@@ -361,6 +372,7 @@ export default async function PropertyDetailPage({
         title={p.title}
         location={p.location_desc}
         price={p.price}
+        propertyUrl={propertyUrl}
       />
     </>
   );

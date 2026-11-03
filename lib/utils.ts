@@ -104,18 +104,21 @@ export function buildBookingWhatsAppUrl({
   title,
   location,
   price,
+  propertyUrl,
 }: {
   phoneNumber: string;
   code: string;
   title: string;
   location?: string | null;
   price: number;
+  propertyUrl?: string;
 }): string {
   const locLine = location ? `\n📍 الموقع: ${location}` : "";
+  const linkLine = propertyUrl ? `\n🔗 رابط الإعلان: ${propertyUrl}` : "";
   const message = `السلام عليكم، أرغب في حجز ومعاينة السكن التالي:
 📌 كود السكن: ${code}
 🏠 العنوان: ${title}${locLine}
-💰 السعر: ${formatPrice(price)} ج.م
+💰 السعر: ${formatPrice(price)} ج.م${linkLine}
 — تم الإرسال من منصة سكن طلاب العريش`;
 
   return `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
@@ -131,7 +134,8 @@ export function buildWhatsAppUrl(
   code: string,
   location?: string | null,
   price?: number,
-  title?: string
+  title?: string,
+  propertyUrl?: string
 ): string {
   if (title && price) {
     return buildBookingWhatsAppUrl({
@@ -140,11 +144,13 @@ export function buildWhatsAppUrl(
       title,
       location,
       price,
+      propertyUrl,
     });
   }
   const locText = location ? ` في ${location}` : "";
   const priceText = price ? ` والمعروض بسعر ${formatPrice(price)} ج` : "";
-  const message = `السلام عليكم، أرغب في حجز ومعاينة السكن كود: ${code}${locText}${priceText}`;
+  const linkText = propertyUrl ? `\n🔗 رابط الإعلان: ${propertyUrl}` : "";
+  const message = `السلام عليكم، أرغب في حجز ومعاينة السكن كود: ${code}${locText}${priceText}${linkText}`;
   return `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 }
 
