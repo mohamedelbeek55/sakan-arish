@@ -54,7 +54,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
   const isFemale = property.gender === "female";
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-2xl bg-white border border-stone-200/70 shadow-xs hover:shadow-md transition-all duration-200">
+    <article className="group flex flex-col overflow-hidden rounded-2xl bg-white border border-[#EBE6DC] shadow-xs hover:shadow-md transition-all duration-200">
       {/* 1. Photo First with max 2 small tags */}
       <Link
         href={`/property/${property.id}`}
@@ -75,10 +75,10 @@ export default function PropertyCard({ property }: PropertyCardProps) {
         )}
 
         {/* Top Badges: Max 2 small tags (Status + Gender), strictly no hashtags */}
-        <div className="absolute top-3 inset-x-3 flex items-center justify-between pointer-events-none">
+        <div className="absolute top-2.5 inset-x-2.5 flex items-center justify-between pointer-events-none">
           {/* Status Badge */}
           <span
-            className={`inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-bold backdrop-blur-xs shadow-2xs ${getStatusStyles(
+            className={`inline-flex items-center rounded-lg px-2.5 py-1 text-[11px] font-bold backdrop-blur-xs shadow-2xs ${getStatusStyles(
               property.status
             )}`}
           >
@@ -87,7 +87,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
 
           {/* Gender Tag */}
           <span
-            className={`inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-semibold backdrop-blur-xs shadow-2xs ${
+            className={`inline-flex items-center rounded-lg px-2.5 py-1 text-[11px] font-bold backdrop-blur-xs shadow-2xs ${
               isFemale
                 ? "bg-rose-50/95 text-rose-800 border border-rose-200/60"
                 : "bg-sky-50/95 text-sky-800 border border-sky-200/60"
@@ -99,10 +99,10 @@ export default function PropertyCard({ property }: PropertyCardProps) {
       </Link>
 
       {/* 2. Card Body */}
-      <div className="p-4 flex flex-col flex-1 justify-between gap-3">
+      <div className="p-3.5 sm:p-4 flex flex-col flex-1 justify-between gap-3">
         <div className="space-y-1.5">
           {/* Location & Code Info */}
-          <div className="flex items-center justify-between text-xs text-stone-500 font-medium">
+          <div className="flex items-center justify-between text-xs text-stone-500 font-bold">
             <span>{getAreaLabel(property.area)}</span>
             <span className="font-mono text-[11px] text-stone-400">
               {property.code}
@@ -111,13 +111,13 @@ export default function PropertyCard({ property }: PropertyCardProps) {
 
           {/* Title */}
           <Link href={`/property/${property.id}`} className="block">
-            <h3 className="font-bold text-stone-900 leading-snug line-clamp-1 group-hover:text-sky-800 transition-colors">
+            <h3 className="font-bold text-stone-900 leading-snug line-clamp-1 group-hover:text-[#0369A1] transition-colors text-sm sm:text-base">
               {property.title}
             </h3>
           </Link>
 
           {/* Specs Snippet (Clean, no hashtags) */}
-          <p className="text-xs text-stone-600 line-clamp-1">
+          <p className="text-xs text-stone-500 line-clamp-1 font-medium">
             {property.rooms_count ? `${property.rooms_count} غرف • ` : ""}
             {property.available_beds > 0
               ? `${property.available_beds} سرير متاح`
@@ -128,8 +128,8 @@ export default function PropertyCard({ property }: PropertyCardProps) {
           </p>
         </div>
 
-        {/* 3. Big Price & Link (No pulsing buttons) */}
-        <div className="pt-3 border-t border-stone-100 flex items-baseline justify-between">
+        {/* 3. Big Price & Link */}
+        <div className="pt-3 border-t border-[#EBE6DC]/80 flex items-baseline justify-between">
           <div className="flex items-baseline gap-1">
             <span className="text-xl sm:text-2xl font-black text-stone-900 tracking-tight">
               {formatPrice(property.price)} ج
@@ -141,7 +141,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
 
           <Link
             href={`/property/${property.id}`}
-            className="inline-flex items-center gap-1 text-xs font-bold text-sky-800 hover:text-sky-900 transition-colors"
+            className="inline-flex items-center gap-1 text-xs font-bold text-[#0369A1] hover:text-[#0284C7] bg-sky-50 px-2.5 py-1 rounded-lg border border-sky-200/70 transition-colors"
           >
             <span>التفاصيل</span>
             <ArrowLeft className="h-3.5 w-3.5" />

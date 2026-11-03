@@ -35,16 +35,16 @@ export default function ShareButton({ title, code, price }: ShareButtonProps) {
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 w-full sm:w-auto">
       <Button
         type="button"
         variant="outline"
         size="sm"
         onClick={handleWhatsAppShare}
-        className="gap-1.5 text-xs text-emerald-700 border-emerald-200 bg-emerald-50/60 hover:bg-emerald-100 hover:text-emerald-800"
+        className="flex-1 sm:flex-initial justify-center gap-1.5 text-xs font-bold text-[#166534] border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100 rounded-xl h-9 shadow-2xs transition-colors cursor-pointer"
       >
-        <MessageCircle className="h-3.5 w-3.5" />
-        مشاركة على واتساب
+        <MessageCircle className="h-3.5 w-3.5 text-[#166534]" />
+        مشاركة واتساب
       </Button>
 
       <Button
@@ -52,16 +52,16 @@ export default function ShareButton({ title, code, price }: ShareButtonProps) {
         variant="outline"
         size="sm"
         onClick={handleCopy}
-        className="gap-1.5 text-xs text-slate-600 hover:text-slate-900"
+        className="flex-1 sm:flex-initial justify-center gap-1.5 text-xs font-bold text-stone-700 border-[#EBE6DC] bg-white hover:bg-[#FAF7F0] rounded-xl h-9 shadow-2xs transition-colors cursor-pointer"
       >
         {copied ? (
           <>
-            <Check className="h-3.5 w-3.5 text-emerald-600" />
-            <span className="text-emerald-600 font-medium">تم النسخ!</span>
+            <Check className="h-3.5 w-3.5 text-[#166534]" />
+            <span className="text-[#166534]">تم النسخ!</span>
           </>
         ) : (
           <>
-            <Copy className="h-3.5 w-3.5" />
+            <Copy className="h-3.5 w-3.5 text-stone-500" />
             نسخ الرابط
           </>
         )}

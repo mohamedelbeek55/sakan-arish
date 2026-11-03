@@ -127,24 +127,24 @@ export default async function PropertyDetailPage({
 
   return (
     <>
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8 pb-28 lg:pb-12 space-y-4 sm:space-y-6">
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-teal-700 mb-6 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-stone-600 hover:text-[#0369A1] transition-colors"
         >
           <ArrowRight className="h-4 w-4" />
           العودة لكافة السكنات
         </Link>
 
-        <div className="grid gap-8 lg:grid-cols-5">
-          {/* Gallery Column */}
-          <div className="lg:col-span-3 space-y-6">
+        <div className="grid gap-6 lg:gap-8 lg:grid-cols-5">
+          {/* Gallery & Video Column */}
+          <div className="lg:col-span-3 space-y-4 sm:space-y-6">
             <PropertyGallery images={p.images} title={p.title} />
 
             {p.youtube_video_url && (
-              <div className="space-y-3">
-                <h3 className="text-lg font-semibold text-slate-900">
-                  جولة فيديو
+              <div className="rounded-2xl border border-[#EBE6DC] bg-white p-4 space-y-3 shadow-2xs">
+                <h3 className="text-sm sm:text-base font-black text-stone-900">
+                  جولة فيديو داخل السكن 📹
                 </h3>
                 <YouTubeEmbed url={p.youtube_video_url} />
               </div>
@@ -152,17 +152,17 @@ export default async function PropertyDetailPage({
           </div>
 
           {/* Details Column */}
-          <div className="lg:col-span-2 space-y-5">
-            {/* Status & Badges (No hashtags) */}
-            <div className="flex flex-wrap items-center gap-2">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-5">
+            {/* Status & Badges */}
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               <span
-                className={`inline-flex items-center rounded-lg px-3 py-1 text-xs font-bold ${getStatusStyles(
+                className={`inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-bold ${getStatusStyles(
                   p.status
                 )}`}
               >
                 {getStatusLabel(p.status)}
               </span>
-              <span className="inline-flex items-center rounded-lg bg-sky-50 border border-sky-200/80 px-2.5 py-1 text-xs font-bold text-sky-900">
+              <span className="inline-flex items-center rounded-lg bg-sky-50 border border-sky-200/80 px-2.5 py-1 text-xs font-bold text-[#0369A1]">
                 {getAreaLabel(p.area)}
               </span>
               <span
@@ -178,27 +178,31 @@ export default async function PropertyDetailPage({
                 {getRentalTypeLabel(p.rental_type)}
               </span>
               {p.walking_minutes_to_university ? (
-                <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 border border-emerald-200/80 px-2.5 py-1 text-xs font-bold text-emerald-800">
-                  <Footprints className="h-3.5 w-3.5 text-emerald-600" />
-                  {p.walking_minutes_to_university} دقائق للجامعة
+                <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 border border-emerald-200/80 px-2.5 py-1 text-xs font-bold text-[#166534]">
+                  <Footprints className="h-3.5 w-3.5 text-[#166534]" />
+                  {p.walking_minutes_to_university} د للجامعة
                 </span>
               ) : null}
             </div>
 
-            {/* Title & Code + Share */}
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-              <div>
-                <h1 className="text-2xl font-bold text-slate-900">{p.title}</h1>
-                <p className="text-sm text-slate-400 mt-1">كود السكن: {p.code}</p>
+            {/* Title, Code & Share */}
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 border-b border-[#EBE6DC] pb-4">
+              <div className="space-y-1">
+                <h1 className="text-xl sm:text-2xl font-black text-stone-900 leading-snug">
+                  {p.title}
+                </h1>
+                <p className="text-xs sm:text-sm text-stone-400 font-mono font-bold">
+                  كود السكن: {p.code}
+                </p>
               </div>
               <ShareButton title={p.title} code={p.code} price={p.price} />
             </div>
 
             {/* Location (Optional) */}
             {p.location_desc ? (
-              <div className="flex items-start gap-2 text-slate-600">
-                <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0 text-slate-400" />
-                <span className="text-sm">{p.location_desc}</span>
+              <div className="flex items-start gap-2 text-stone-600 text-xs sm:text-sm">
+                <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0 text-[#0369A1]" />
+                <span className="leading-relaxed">{p.location_desc}</span>
               </div>
             ) : null}
 
@@ -209,7 +213,7 @@ export default async function PropertyDetailPage({
                   href={p.maps_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-700 hover:text-teal-800 bg-teal-50 border border-teal-200 px-3 py-1.5 rounded-lg transition"
+                  className="inline-flex w-full sm:w-auto items-center justify-center gap-1.5 text-xs font-bold text-[#0369A1] hover:text-[#0284C7] bg-sky-50 border border-sky-200/80 px-3.5 py-2 rounded-xl transition shadow-2xs"
                 >
                   <Map className="h-3.5 w-3.5" />
                   عرض الموقع على خرائط Google
@@ -217,85 +221,94 @@ export default async function PropertyDetailPage({
               </div>
             ) : null}
 
-            {/* Price */}
-            <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-extrabold text-teal-700">
-                  {formatPrice(p.price)}
-                </span>
-                <span className="text-base text-slate-500">
-                  ج.م / {getRentalTypePriceLabel(p.rental_type)}
+            {/* Price Box */}
+            <div className="rounded-2xl border border-[#EBE6DC] bg-[#FAF7F0] p-4 shadow-2xs">
+              <div className="flex items-baseline justify-between gap-2">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-2xl sm:text-3xl font-black text-[#0369A1]">
+                    {formatPrice(p.price)}
+                  </span>
+                  <span className="text-xs sm:text-sm text-stone-500 font-bold">
+                    ج.م / {getRentalTypePriceLabel(p.rental_type)}
+                  </span>
+                </div>
+                <span className="text-[11px] font-bold text-stone-400">
+                  بدون وسيط
                 </span>
               </div>
             </div>
 
             {/* Unit Specifications Grid */}
-            <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
-              <h3 className="text-sm font-semibold text-slate-900">
+            <div className="rounded-2xl border border-[#EBE6DC] bg-white p-4 sm:p-5 space-y-3.5 shadow-2xs">
+              <h3 className="text-sm font-black text-stone-900">
                 مواصفات وتفاصيل السكن
               </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs text-slate-600">
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-50">
-                  <Home className="h-4 w-4 text-teal-600" />
-                  <span>الغرف: {p.rooms_count || 1}</span>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5 text-xs text-stone-700">
+                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#FAF7F0] border border-[#EBE6DC]/80 min-w-0">
+                  <Home className="h-4 w-4 text-[#0369A1] flex-shrink-0" />
+                  <span className="truncate">الغرف: {p.rooms_count || 1}</span>
                 </div>
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-50">
-                  <Bed className="h-4 w-4 text-slate-500" />
-                  <span>إجمالي الأسرّة: {p.total_beds}</span>
+                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#FAF7F0] border border-[#EBE6DC]/80 min-w-0">
+                  <Bed className="h-4 w-4 text-stone-500 flex-shrink-0" />
+                  <span className="truncate">الأسرّة: {p.total_beds}</span>
                 </div>
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-50">
-                  <Bed className="h-4 w-4 text-emerald-600" />
-                  <span>متاح الآن: {p.available_beds}</span>
+                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#FAF7F0] border border-[#EBE6DC]/80 min-w-0">
+                  <Bed className="h-4 w-4 text-[#166534] flex-shrink-0" />
+                  <span className="truncate font-bold text-[#166534]">
+                    متاح: {p.available_beds}
+                  </span>
                 </div>
                 {p.floor !== null && p.floor !== undefined ? (
-                  <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-50">
-                    <ArrowUpDown className="h-4 w-4 text-slate-500" />
-                    <span>
+                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#FAF7F0] border border-[#EBE6DC]/80 min-w-0">
+                    <ArrowUpDown className="h-4 w-4 text-stone-500 flex-shrink-0" />
+                    <span className="truncate">
                       {p.floor === 0 ? "الدور الأرضي" : `الدور ${p.floor}`}
                     </span>
                   </div>
                 ) : null}
                 {p.furnished !== null && p.furnished !== undefined ? (
-                  <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-50">
-                    <CheckCircle2 className="h-4 w-4 text-teal-600" />
-                    <span>{p.furnished ? "مفروشة بالكامل" : "غير مفروشة"}</span>
+                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#FAF7F0] border border-[#EBE6DC]/80 min-w-0">
+                    <CheckCircle2 className="h-4 w-4 text-[#0369A1] flex-shrink-0" />
+                    <span className="truncate">
+                      {p.furnished ? "مفروشة بالكامل" : "غير مفروشة"}
+                    </span>
                   </div>
                 ) : null}
                 {p.utilities_included !== null && p.utilities_included !== undefined ? (
-                  <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-50">
-                    <CheckCircle2 className="h-4 w-4 text-teal-600" />
-                    <span>
-                      {p.utilities_included
-                        ? "شامل الفواتير"
-                        : "الفواتير منفصلة"}
+                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#FAF7F0] border border-[#EBE6DC]/80 min-w-0">
+                    <CheckCircle2 className="h-4 w-4 text-[#0369A1] flex-shrink-0" />
+                    <span className="truncate">
+                      {p.utilities_included ? "شامل الفواتير" : "الفواتير منفصلة"}
                     </span>
                   </div>
                 ) : null}
                 {p.students_per_room !== null && p.students_per_room !== undefined ? (
-                  <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-50">
-                    <Users className="h-4 w-4 text-slate-500" />
-                    <span>سعة الغرفة: {p.students_per_room} طلاب</span>
+                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#FAF7F0] border border-[#EBE6DC]/80 min-w-0">
+                    <Users className="h-4 w-4 text-stone-500 flex-shrink-0" />
+                    <span className="truncate">
+                      الغرفة: {p.students_per_room} طلاب
+                    </span>
                   </div>
                 ) : null}
                 {p.deposit !== null && p.deposit !== undefined ? (
-                  <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-50">
-                    <DollarSign className="h-4 w-4 text-slate-500" />
-                    <span>
-                      التأمين: {p.deposit > 0 ? `${formatPrice(p.deposit)} ج.م` : "بدون تأمين"}
+                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#FAF7F0] border border-[#EBE6DC]/80 min-w-0">
+                    <DollarSign className="h-4 w-4 text-stone-500 flex-shrink-0" />
+                    <span className="truncate">
+                      التأمين: {p.deposit > 0 ? `${formatPrice(p.deposit)} ج` : "بدون تأمين"}
                     </span>
                   </div>
                 ) : null}
                 {p.contract_months !== null && p.contract_months !== undefined ? (
-                  <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-50">
-                    <Calendar className="h-4 w-4 text-slate-500" />
-                    <span>مدة العقد: {p.contract_months} شهر</span>
+                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#FAF7F0] border border-[#EBE6DC]/80 min-w-0">
+                    <Calendar className="h-4 w-4 text-stone-500 flex-shrink-0" />
+                    <span className="truncate">العقد: {p.contract_months} شهر</span>
                   </div>
                 ) : null}
               </div>
 
               {p.last_verified_at ? (
-                <div className="pt-2 border-t border-slate-100 flex items-center gap-1.5 text-[11px] text-emerald-700 font-medium">
-                  <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                <div className="pt-2 border-t border-[#EBE6DC]/80 flex items-center gap-1.5 text-[11px] text-[#166534] font-bold">
+                  <ShieldCheck className="h-4 w-4 text-[#166534] flex-shrink-0" />
                   <span>
                     تمت المعاينة والتأكد من بيانات السكن بواسطة فريق المنصة
                   </span>
@@ -305,22 +318,22 @@ export default async function PropertyDetailPage({
 
             {/* Amenities */}
             {p.amenities && p.amenities.length > 0 && (
-              <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
-                <h3 className="text-sm font-semibold text-slate-900">
+              <div className="rounded-2xl border border-[#EBE6DC] bg-white p-4 sm:p-5 space-y-3 shadow-2xs">
+                <h3 className="text-sm font-black text-stone-900">
                   المرافق والخدمات المتاحة
                 </h3>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {p.amenities.map((amenity) => (
                     <div
                       key={amenity}
-                      className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-700 border border-slate-100"
+                      className="flex items-center gap-2 rounded-xl bg-[#FAF7F0] px-3 py-2.5 text-xs font-semibold text-stone-700 border border-[#EBE6DC]/80 min-w-0 truncate"
                     >
-                      <span className="text-slate-400">
+                      <span className="text-[#0369A1] flex-shrink-0">
                         {amenityIcons[amenity] || (
-                          <div className="h-3.5 w-3.5 rounded-full bg-slate-200" />
+                          <div className="h-3.5 w-3.5 rounded-full bg-stone-300" />
                         )}
                       </span>
-                      {amenity}
+                      <span className="truncate">{amenity}</span>
                     </div>
                   ))}
                 </div>
@@ -329,16 +342,16 @@ export default async function PropertyDetailPage({
 
             {/* Description */}
             {p.description && (
-              <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
-                <h3 className="text-sm font-semibold text-slate-900">وصف تفصيلي</h3>
-                <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
+              <div className="rounded-2xl border border-[#EBE6DC] bg-white p-4 sm:p-5 space-y-2 shadow-2xs">
+                <h3 className="text-sm font-black text-stone-900">وصف ومميزات إضافية</h3>
+                <p className="text-xs sm:text-sm text-stone-600 leading-relaxed whitespace-pre-line break-words">
                   {p.description}
                 </p>
               </div>
             )}
 
             {/* Desktop WhatsApp CTA */}
-            <div className="hidden lg:block">
+            <div className="hidden lg:block pt-2">
               <WhatsAppBookingButton
                 propertyId={p.id}
                 phoneNumber={whatsappNumber}
@@ -348,7 +361,7 @@ export default async function PropertyDetailPage({
                 price={p.price}
                 propertyUrl={propertyUrl}
                 whatsappUrl={whatsappBookingUrl}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-6 py-4 text-base font-bold text-white transition hover:bg-[#20BD5A] shadow-md hover:shadow-lg transform active:scale-[0.99] cursor-pointer"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] px-6 py-3.5 text-base font-bold text-white shadow-xs transition active:scale-[0.99] cursor-pointer"
               >
                 <svg
                   className="h-5 w-5"
