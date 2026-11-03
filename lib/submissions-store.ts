@@ -74,19 +74,36 @@ export async function getAllSubmissions(): Promise<PropertySubmission[]> {
 
 export async function updateSubmissionStatus(
   id: string,
-  newStatus: "approved" | "rejected"
+  newStatus: "rejected"
 ): Promise<{ success: boolean; error?: string }> {
+  if (newStatus !== "rejected") {
+    return {
+      success: false,
+      error: "لا يمكن تعديل الحالة إلا للرفض؛ اعتماد الطلبات يتم حصراً عبر دالة approve_submission",
+    };
+  }
+
   const auth = await requireAdmin({ redirectOnFail: false });
   if (!auth.success) return { success: false, error: auth.error };
 
   try {
     const supabase = await createClient();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("submissions")
-      .update({ status: newStatus })
-      .eq("id", id);
+      .update({ status: "rejected" })
+      .eq("id", id)
+      .eq("status", "pending")
+      .select("id");
 
     if (error) return { success: false, error: error.message };
+
+    if (!data || data.length === 0) {
+      return {
+        success: false,
+        error: "لم يتم تعديل الطلب؛ قد يكون الطلب تم اعتماده أو رفضه مسبقاً (ليس في حالة الانتظار)",
+      };
+    }
+
     return { success: true };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "فشل تحديث حالة الطلب";
