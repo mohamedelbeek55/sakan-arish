@@ -1,74 +1,45 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #0f172a;
-}
-
-@keyframes enter {
-  from {
-    opacity: 0;
-    transform: translateY(4px) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes exit {
-  from {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(4px) scale(0.97);
-  }
-}
-
-:root {
-  --background: #ffffff;
-  --foreground: #0f172a;
+  --background: #fbf9f5;
+  --foreground: #1c1917;
 }
 
 * {
-  border-color: #e2e8f0;
+  border-color: #ebe6dc;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-cairo), sans-serif;
+  font-family: var(--font-cairo), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #f5f2eb;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #94a3b8;
-  border-radius: 3px;
+  background: #d6cfc2;
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
+  background: #b8ad9c;
 }
 
-/* RTL-specific adjustments */
-[dir="rtl"] .space-x-2 > :not([hidden]) ~ :not([hidden]) {
-  --tw-space-x-reverse: 1;
+/* Hide scrollbar utility for clean touch-scrolling chips */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
-
-[dir="rtl"] .space-x-3 > :not([hidden]) ~ :not([hidden]) {
-  --tw-space-x-reverse: 1;
-}
-
-[dir="rtl"] .space-x-4 > :not([hidden]) ~ :not([hidden]) {
-  --tw-space-x-reverse: 1;
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="ar" dir="rtl" className={`${cairo.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col font-sans bg-white text-slate-900">
+      <body className="min-h-full flex flex-col font-sans bg-[#FBF9F5] text-stone-900 selection:bg-sky-100 selection:text-sky-900">
         <Navbar />
         <main className="flex-1">{children}</main>
         <Footer />

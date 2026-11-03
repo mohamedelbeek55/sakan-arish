@@ -1,12 +1,11 @@
 import { Suspense } from "react";
-import { createClient } from "@/lib/supabase/server";
 import PropertyCard from "@/components/property/PropertyCard";
 import PropertyFilters from "@/components/property/PropertyFilters";
+import AreaCards from "@/components/home/AreaCards";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Building2, GraduationCap, Search as SearchIcon, ShieldCheck } from "lucide-react";
+import { Search as SearchIcon } from "lucide-react";
 import type { Property } from "@/components/property/PropertyCard";
 import { getAllProperties } from "@/lib/properties-store";
-
 import { normalizeArabicText } from "@/lib/utils";
 
 interface HomePageProps {
@@ -93,18 +92,20 @@ async function PropertyGrid({
 
   if (sorted.length === 0) {
     return (
-      <div className="text-center py-16 space-y-3">
-        <SearchIcon className="mx-auto h-12 w-12 text-slate-300" />
-        <h3 className="text-lg font-medium text-slate-600">لا توجد نتائج مطابقة للبحث</h3>
-        <p className="text-sm text-slate-400">
-          جرّب تغيير معايير البحث، إزالة بعض الفلاتر، أو استكشاف مناطق أخرى
+      <div className="text-center py-16 space-y-3 bg-white rounded-2xl border border-stone-200/60 p-8">
+        <SearchIcon className="mx-auto h-10 w-10 text-stone-300" />
+        <h3 className="text-base font-bold text-stone-800">
+          مفيش سكنات مطابقة للبحث حالياً
+        </h3>
+        <p className="text-xs text-stone-500 max-w-sm mx-auto leading-relaxed">
+          جرّب تشيل بعض الفلاتر أو اختار منطقة تانية من الكروت فوق.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {sorted.map((property) => (
         <PropertyCard key={property.id} property={property} />
       ))}
@@ -114,25 +115,20 @@ async function PropertyGrid({
 
 function PropertyGridSkeleton() {
   return (
-    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {[...Array(6)].map((_, i) => (
-        <div key={i} className="rounded-xl border border-slate-200 bg-white overflow-hidden">
-          <Skeleton className="aspect-[16/10] w-full rounded-none" />
-          <div className="p-4 space-y-3">
-            <div className="flex gap-2">
-              <Skeleton className="h-5 w-16" />
-              <Skeleton className="h-5 w-20" />
-            </div>
-            <Skeleton className="h-5 w-3/4" />
+        <div
+          key={i}
+          className="rounded-2xl border border-stone-200/60 bg-white overflow-hidden space-y-3 p-3"
+        >
+          <Skeleton className="aspect-[16/11] w-full rounded-xl" />
+          <div className="space-y-2 px-1">
+            <Skeleton className="h-4 w-1/3" />
+            <Skeleton className="h-5 w-4/5" />
             <Skeleton className="h-4 w-1/2" />
-            <div className="flex gap-1.5">
-              <Skeleton className="h-5 w-12" />
-              <Skeleton className="h-5 w-14" />
-              <Skeleton className="h-5 w-10" />
-            </div>
-            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-              <Skeleton className="h-6 w-24" />
-              <Skeleton className="h-8 w-24" />
+            <div className="pt-2 border-t border-stone-100 flex justify-between items-center">
+              <Skeleton className="h-6 w-20" />
+              <Skeleton className="h-4 w-12" />
             </div>
           </div>
         </div>
@@ -144,73 +140,61 @@ function PropertyGridSkeleton() {
 export default async function HomePage({ searchParams }: HomePageProps) {
   const params = await searchParams;
 
+  // Pre-calculate counts for the 2 area cards
+  let masaeedCount = 0;
+  let dahiyaCount = 0;
+  try {
+    const all = await getAllProperties();
+    masaeedCount = all.filter((p) => p.area === "al_masaeed").length;
+    dahiyaCount = all.filter((p) => p.area === "al_dahiya").length;
+  } catch {
+    // Graceful fallback
+  }
+
   return (
-    <div>
-      {/* Hero Section */}
-      <section className="relative border-b border-slate-200 bg-gradient-to-b from-slate-50 to-white">
-        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center space-y-5">
-            <div className="inline-flex items-center gap-2 rounded-full bg-teal-50 px-4 py-1.5 text-sm font-medium text-teal-700 border border-teal-100">
-              <GraduationCap className="h-4 w-4" />
-              لطلاب جامعة سيناء وجامعة العريش
-            </div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
-              ابحث عن سكنك
-              <span className="text-teal-700"> بسهولة</span>
+    <div className="min-h-screen space-y-8 pb-16">
+      {/* 1. Hero: Headline + Two Large Tappable Area Cards (No badges, No 3-icon feature section) */}
+      <section className="bg-stone-50/70 border-b border-stone-200/60">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8 space-y-6">
+          <div className="space-y-1.5 max-w-2xl">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-stone-900 tracking-tight">
+              سكنك في العريش، جمب جامعتك 🏠
             </h1>
-            <p className="text-base text-slate-500 sm:text-lg max-w-lg mx-auto leading-relaxed">
-              تصفّح السكنات المتاحة بالقرب من جامعتك، شاهد الصور والفيديوهات،
-              وتواصل مباشرة مع صاحب السكن عبر واتساب — بدون وسطاء.
+            <p className="text-xs sm:text-sm text-stone-500 leading-relaxed">
+              شقق وسكنات مفروشة لطلبة جامعة سيناء وجامعة العريش — متأكدين منها وبدون وسيط.
+            </p>
+          </div>
+
+          {/* Two Large Tappable Cards that Filter the List */}
+          <Suspense fallback={null}>
+            <AreaCards
+              currentArea={params.area}
+              masaeedCount={masaeedCount}
+              dahiyaCount={dahiyaCount}
+            />
+          </Suspense>
+        </div>
+      </section>
+
+      {/* 2. Listings Section: Scrollable Chips + Photo-First Grid */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-5">
+        <div className="flex items-baseline justify-between">
+          <div>
+            <h2 className="text-lg sm:text-xl font-bold text-stone-900">
+              السكنات المتاحة
+            </h2>
+            <p className="text-xs text-stone-400 mt-0.5">
+              تواصل مباشرة مع المالك على واتساب بدون أي عمولة
             </p>
           </div>
         </div>
-      </section>
 
-      {/* Features */}
-      <section className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-          <div className="grid gap-6 sm:grid-cols-3">
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-                <ShieldCheck className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-slate-900">إعلانات موثّقة</h3>
-                <p className="text-xs text-slate-500 mt-0.5">جميع السكنات تم التحقق منها</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                <Building2 className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-slate-900">صور وفيديو حقيقية</h3>
-                <p className="text-xs text-slate-500 mt-0.5">شاهد السكن قبل الزيارة</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
-                <SearchIcon className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-slate-900">تواصل مباشر</h3>
-                <p className="text-xs text-slate-500 mt-0.5">تواصل عبر واتساب بدون وسطاء</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Filters & Grid */}
-      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-slate-900">السكنات المتاحة</h2>
-        </div>
-
+        {/* Scrollable Filters */}
         <Suspense fallback={null}>
           <PropertyFilters />
         </Suspense>
 
+        {/* Property Grid */}
         <Suspense fallback={<PropertyGridSkeleton />}>
           <PropertyGrid
             area={params.area}
@@ -223,18 +207,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </Suspense>
       </section>
 
-      {/* About Section */}
-      <section id="about" className="border-t border-slate-200 bg-slate-50/50">
-        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center space-y-4">
-            <h2 className="text-2xl font-bold text-slate-900">عن المنصة</h2>
-            <p className="text-slate-500 leading-relaxed">
-              &quot;سكن طلاب العريش&quot; هي منصة مجانية تهدف لمساعدة طلاب جامعة سيناء (فرع المساعيد)
-              وجامعة العريش (الضاحية) في إيجاد سكن مناسب بسهولة وشفافية. نوفّر
-              إعلانات موثّقة بالصور والفيديوهات، مع إمكانية التواصل المباشر مع
-              أصحاب السكنات عبر واتساب — بدون وسطاء أو عمولات.
-            </p>
-          </div>
+      {/* 3. Short About Footer Note */}
+      <section id="about" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6">
+        <div className="rounded-2xl border border-stone-200/60 bg-stone-50/60 p-6 text-center space-y-2">
+          <h3 className="font-bold text-stone-900 text-sm">عن المنصة</h3>
+          <p className="text-xs text-stone-500 leading-relaxed max-w-xl mx-auto">
+            مبادرة طلابية مجانية لخدمة زمايلنا في جامعة سيناء وجامعة العريش. بنساعدك تلاقي سكن مضمون ونوفر عليك لف وتعب السماسرة.
+          </p>
         </div>
       </section>
     </div>

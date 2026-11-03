@@ -41,19 +41,19 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+    <header className="sticky top-0 z-40 w-full border-b border-stone-200/70 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Brand */}
         <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-700 text-white transition-colors group-hover:bg-teal-800">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-800 text-white transition-colors group-hover:bg-sky-900 shadow-2xs">
             <Building2 className="h-5 w-5" />
           </div>
           <div className="flex flex-col">
-            <span className="text-base font-bold text-slate-900 leading-tight">
+            <span className="text-base font-extrabold text-stone-900 leading-tight">
               سكن طلاب العريش
             </span>
-            <span className="text-[10px] text-slate-400 leading-tight hidden sm:block">
-              ابحث عن سكنك بسهولة
+            <span className="text-[10px] text-stone-400 leading-tight hidden sm:block">
+              جامعة سيناء • جامعة العريش
             </span>
           </div>
         </Link>
@@ -61,12 +61,12 @@ export default function Navbar() {
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-2">
           <Link href="/">
-            <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-900">
+            <Button variant="ghost" size="sm" className="text-stone-600 hover:text-stone-900">
               الرئيسية
             </Button>
           </Link>
           <Link href="/#about">
-            <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-900">
+            <Button variant="ghost" size="sm" className="text-stone-600 hover:text-stone-900">
               عن المنصة
             </Button>
           </Link>
@@ -75,10 +75,10 @@ export default function Navbar() {
             <Button
               size="sm"
               variant="outline"
-              className="gap-1.5 border-teal-200 text-teal-800 bg-teal-50/70 hover:bg-teal-100 hover:text-teal-900 font-semibold cursor-pointer"
+              className="gap-1.5 border-stone-200 text-stone-800 bg-stone-50 hover:bg-stone-100 font-semibold cursor-pointer rounded-xl"
             >
-              <Building2 className="h-4 w-4 text-teal-600" />
-              صاحب سكن؟ أعلن معنا
+              <Building2 className="h-4 w-4 text-sky-800" />
+              أعلن عن سكنك
             </Button>
           </Link>
 

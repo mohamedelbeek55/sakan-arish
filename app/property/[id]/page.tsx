@@ -148,32 +148,32 @@ export default async function PropertyDetailPage({
 
           {/* Details Column */}
           <div className="lg:col-span-2 space-y-5">
-            {/* Status & Badges */}
+            {/* Status & Badges (No hashtags) */}
             <div className="flex flex-wrap items-center gap-2">
               <span
-                className={`inline-flex items-center rounded-lg px-3 py-1 text-sm font-semibold ${getStatusStyles(
+                className={`inline-flex items-center rounded-lg px-3 py-1 text-xs font-bold ${getStatusStyles(
                   p.status
                 )}`}
               >
                 {getStatusLabel(p.status)}
               </span>
-              <span className="inline-flex items-center rounded-lg bg-teal-50 border border-teal-200 px-3 py-1 text-sm font-semibold text-teal-800 shadow-2xs">
-                #{getAreaLabel(p.area)}
+              <span className="inline-flex items-center rounded-lg bg-sky-50 border border-sky-200/80 px-2.5 py-1 text-xs font-bold text-sky-900">
+                {getAreaLabel(p.area)}
               </span>
               <span
-                className={`inline-flex items-center rounded-lg border px-3 py-1 text-sm font-semibold shadow-2xs ${
+                className={`inline-flex items-center rounded-lg border px-2.5 py-1 text-xs font-bold ${
                   p.gender === "female"
-                    ? "bg-rose-50 border-rose-200 text-rose-700"
-                    : "bg-blue-50 border-blue-200 text-blue-700"
+                    ? "bg-rose-50 border-rose-200/70 text-rose-800"
+                    : "bg-sky-50 border-sky-200/70 text-sky-800"
                 }`}
               >
-                #{getGenderLabel(p.gender)}
+                {p.gender === "female" ? "سكن بنات" : "سكن شباب"}
               </span>
-              <span className="inline-flex items-center rounded-lg bg-amber-50 border border-amber-200 px-3 py-1 text-sm font-semibold text-amber-800 shadow-2xs">
-                #{getRentalTypeLabel(p.rental_type)}
+              <span className="inline-flex items-center rounded-lg bg-stone-100 border border-stone-200 px-2.5 py-1 text-xs font-bold text-stone-800">
+                {getRentalTypeLabel(p.rental_type)}
               </span>
               {p.walking_minutes_to_university ? (
-                <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-1 text-sm font-semibold text-emerald-800 shadow-2xs">
+                <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 border border-emerald-200/80 px-2.5 py-1 text-xs font-bold text-emerald-800">
                   <Footprints className="h-3.5 w-3.5 text-emerald-600" />
                   {p.walking_minutes_to_university} دقائق للجامعة
                 </span>
