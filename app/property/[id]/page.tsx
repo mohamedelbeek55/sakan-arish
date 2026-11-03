@@ -127,7 +127,7 @@ export default async function PropertyDetailPage({
 
   return (
     <>
-      <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8 pb-28 lg:pb-12 space-y-4 sm:space-y-6">
+      <div className="mx-auto max-w-7xl px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 pb-28 lg:pb-12 space-y-4 sm:space-y-6 w-full max-w-full min-w-0 overflow-hidden">
         <Link
           href="/"
           className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-stone-600 hover:text-[#0369A1] transition-colors"
@@ -136,9 +136,9 @@ export default async function PropertyDetailPage({
           العودة لكافة السكنات
         </Link>
 
-        <div className="grid gap-6 lg:gap-8 lg:grid-cols-5">
+        <div className="grid gap-5 sm:gap-6 lg:gap-8 lg:grid-cols-5 w-full max-w-full min-w-0">
           {/* Gallery & Video Column */}
-          <div className="lg:col-span-3 space-y-4 sm:space-y-6">
+          <div className="lg:col-span-3 space-y-4 sm:space-y-6 w-full max-w-full min-w-0 overflow-hidden">
             <PropertyGallery images={p.images} title={p.title} />
 
             {p.youtube_video_url && (
@@ -152,7 +152,7 @@ export default async function PropertyDetailPage({
           </div>
 
           {/* Details Column */}
-          <div className="lg:col-span-2 space-y-4 sm:space-y-5">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-5 w-full max-w-full min-w-0">
             {/* Status & Badges */}
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               <span

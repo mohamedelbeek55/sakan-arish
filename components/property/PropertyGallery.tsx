@@ -60,10 +60,10 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
   return (
     <>
       {/* Main Gallery */}
-      <div className="space-y-2.5 sm:space-y-3">
+      <div className="space-y-2.5 sm:space-y-3 w-full max-w-full min-w-0 overflow-hidden">
         {/* Main Image Container */}
         <div
-          className="relative aspect-[4/3] sm:aspect-[16/10] overflow-hidden rounded-2xl border border-[#EBE6DC] bg-stone-100 cursor-pointer group select-none touch-pan-y shadow-2xs"
+          className="relative w-full max-w-full aspect-[4/3] sm:aspect-[16/10] overflow-hidden rounded-2xl border border-[#EBE6DC] bg-stone-100 cursor-pointer group select-none touch-pan-y shadow-2xs"
           onClick={() => setLightboxOpen(true)}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
@@ -117,14 +117,14 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
 
         {/* Thumbnails Row */}
         {images.length > 1 && (
-          <div className="flex gap-2 overflow-x-auto pb-1.5 pt-0.5 scrollbar-none touch-pan-x">
+          <div className="flex gap-2 overflow-x-auto pb-1.5 pt-0.5 no-scrollbar touch-pan-x w-full max-w-full min-w-0">
             {images.map((img, i) => (
               <button
                 type="button"
                 key={i}
                 onClick={() => setSelectedIndex(i)}
                 className={cn(
-                  "relative h-14 w-18 sm:h-16 sm:w-20 flex-shrink-0 overflow-hidden rounded-xl border-2 transition-all cursor-pointer shadow-2xs",
+                  "relative h-14 w-18 sm:h-16 sm:w-20 shrink-0 overflow-hidden rounded-xl border-2 transition-all cursor-pointer shadow-2xs",
                   i === selectedIndex
                     ? "border-[#0369A1] ring-2 ring-[#0369A1]/20 scale-102"
                     : "border-[#EBE6DC] opacity-70 hover:opacity-100"

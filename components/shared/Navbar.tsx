@@ -75,17 +75,17 @@ export default function Navbar() {
   // 1. Minimal Header for Admin Login Page
   if (isLoginPage) {
     return (
-      <header className="sticky top-0 z-40 w-full border-b border-[#EBE6DC] bg-white/95 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0369A1] text-white shadow-2xs">
+      <header className="sticky top-0 z-40 w-full max-w-full overflow-x-hidden border-b border-[#EBE6DC] bg-white/95 backdrop-blur">
+        <div className="mx-auto flex h-14 sm:h-16 max-w-7xl items-center justify-between px-3.5 sm:px-6 lg:px-8 w-full">
+          <Link href="/" className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-shrink">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#0369A1] text-white shadow-2xs">
               <Building2 className="h-5 w-5" />
             </div>
-            <div className="flex flex-col">
-              <span className="text-base font-black text-stone-900 leading-tight">
+            <div className="flex flex-col min-w-0">
+              <span className="text-sm sm:text-base font-black text-stone-900 leading-tight truncate">
                 سكن طلاب العريش
               </span>
-              <span className="text-[10px] text-stone-400 font-medium">
+              <span className="text-[10px] text-stone-400 font-medium truncate">
                 بوابة دخول المشرف
               </span>
             </div>
@@ -95,7 +95,7 @@ export default function Navbar() {
             <Button
               variant="outline"
               size="sm"
-              className="border-[#EBE6DC] text-stone-700 hover:bg-[#FAF7F0] rounded-xl text-xs font-bold gap-1.5 h-9"
+              className="border-[#EBE6DC] text-stone-700 hover:bg-[#FAF7F0] rounded-xl text-xs font-bold gap-1.5 h-9 shrink-0"
             >
               <Home className="h-3.5 w-3.5 text-stone-500" />
               العودة للمنصة الرئيسية
@@ -109,19 +109,19 @@ export default function Navbar() {
   // 2. Dedicated Admin Navbar (when inside /admin/dashboard, etc.)
   if (isAdminRoute) {
     return (
-      <header className="sticky top-0 z-40 w-full border-b border-[#EBE6DC] bg-white/95 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <header className="sticky top-0 z-40 w-full max-w-full overflow-x-hidden border-b border-[#EBE6DC] bg-white/95 backdrop-blur">
+        <div className="mx-auto flex h-14 sm:h-16 max-w-7xl items-center justify-between px-3.5 sm:px-6 lg:px-8 w-full">
           {/* Brand + Admin Badge */}
-          <div className="flex items-center gap-3">
-            <Link href="/admin/dashboard" className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0369A1] text-white shadow-2xs">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-shrink">
+            <Link href="/admin/dashboard" className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#0369A1] text-white shadow-2xs">
                 <Building2 className="h-5 w-5" />
               </div>
-              <div className="flex flex-col">
-                <span className="text-base font-black text-stone-900 leading-tight">
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm sm:text-base font-black text-stone-900 leading-tight truncate">
                   سكن طلاب العريش
                 </span>
-                <span className="text-[10px] font-bold text-[#0369A1]">
+                <span className="text-[10px] font-bold text-[#0369A1] truncate">
                   لوحة التحكم الإدارية
                 </span>
               </div>
@@ -289,15 +289,15 @@ export default function Navbar() {
 
   // 3. Standard Public Navbar for Students & Visitors
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-[#EBE6DC] bg-white/95 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-40 w-full max-w-full overflow-x-hidden border-b border-[#EBE6DC] bg-white/95 backdrop-blur">
+      <div className="mx-auto flex h-14 sm:h-16 max-w-7xl items-center justify-between px-3.5 sm:px-6 lg:px-8 w-full">
         {/* Brand */}
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0369A1] text-white transition-colors group-hover:bg-[#0284C7] shadow-2xs">
+        <Link href="/" className="flex items-center gap-2 sm:gap-2.5 group min-w-0 flex-shrink">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#0369A1] text-white transition-colors group-hover:bg-[#0284C7] shadow-2xs">
             <Building2 className="h-5 w-5" />
           </div>
-          <div className="flex flex-col">
-            <span className="text-base font-black text-stone-900 leading-tight">
+          <div className="flex flex-col min-w-0">
+            <span className="text-sm sm:text-base font-black text-stone-900 leading-tight truncate">
               سكن طلاب العريش
             </span>
             <span className="text-[10px] text-stone-400 font-medium leading-tight hidden sm:block">
@@ -372,7 +372,7 @@ export default function Navbar() {
         <Button
           variant="ghost"
           size="icon"
-          className="md:hidden text-stone-700 hover:bg-[#FAF7F0] rounded-xl"
+          className="md:hidden text-stone-700 hover:bg-[#FAF7F0] rounded-xl shrink-0 h-9 w-9"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-label="القائمة"
         >

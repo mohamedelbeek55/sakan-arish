@@ -20,9 +20,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="ar" dir="rtl" className={`${cairo.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col font-sans bg-[#FBF9F5] text-stone-900 selection:bg-sky-100 selection:text-sky-900">
+      <body className="min-h-full flex flex-col font-sans bg-[#FBF9F5] text-stone-900 selection:bg-sky-100 selection:text-sky-900 overflow-x-hidden w-full max-w-full">
         <Navbar />
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 w-full max-w-full overflow-x-hidden">{children}</main>
         <Footer />
       </body>
     </html>

@@ -75,7 +75,7 @@ export default function PropertyFilters() {
       </div>
 
       {/* Horizontally Scrollable Chips */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs no-scrollbar select-none">
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs no-scrollbar select-none w-full max-w-full min-w-0">
         {/* Reset / All Indicator */}
         {hasActiveFilters && (
           <button
