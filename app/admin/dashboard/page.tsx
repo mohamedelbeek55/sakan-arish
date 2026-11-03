@@ -5,12 +5,14 @@ import {
   Plus,
   Pencil,
   Trash2,
-  LogOut,
   Home,
   CheckCircle,
   AlertTriangle,
   XCircle,
   Eye,
+  MessageSquare,
+  Inbox,
+  Phone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,15 +24,16 @@ import {
   formatPrice,
   getAreaLabel,
   getGenderLabel,
-  getRentalTypePriceLabel,
 } from "@/lib/utils";
 import type { Property } from "@/components/property/PropertyCard";
 import { getAllProperties } from "@/lib/properties-store";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function AdminDashboardPage() {
   await requireAdmin();
 
-  const listings = await getAllProperties();
+  // Load properties with admin privileges (includes owner_phone)
+  const listings = await getAllProperties({ forAdmin: true });
   const totalListings = listings.length;
   const availableCount = listings.filter(
     (p) => p.status === "available"
@@ -40,6 +43,25 @@ export default async function AdminDashboardPage() {
   ).length;
   const bookedCount = listings.filter((p) => p.status === "booked").length;
 
+  // Total WhatsApp clicks
+  const totalClicks = listings.reduce(
+    (acc, p) => acc + (p.whatsapp_clicks || 0),
+    0
+  );
+
+  // Check pending submissions count
+  let pendingSubmissionsCount = 0;
+  try {
+    const supabase = await createClient();
+    const { count } = await supabase
+      .from("submissions")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "pending");
+    pendingSubmissionsCount = count || 0;
+  } catch {
+    // If table doesn't exist yet, gracefully fallback
+  }
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
       {/* Header */}
@@ -47,10 +69,25 @@ export default async function AdminDashboardPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">لوحة التحكم</h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            إدارة السكنات والإعلانات
+            إدارة إعلانات السكن والطلبات الواردة وإحصائيات التفاعل
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href="/admin/dashboard/submissions">
+            <Button
+              variant="outline"
+              size="sm"
+              className="relative gap-1.5 border-teal-200 bg-teal-50/50 text-teal-800 hover:bg-teal-100"
+            >
+              <Inbox className="h-4 w-4 text-teal-600" />
+              طلبات الإعلان
+              {pendingSubmissionsCount > 0 && (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-[11px] font-bold text-white">
+                  {pendingSubmissionsCount}
+                </span>
+              )}
+            </Button>
+          </Link>
           <Link href="/">
             <Button variant="outline" size="sm">
               <Home className="h-4 w-4" />
@@ -58,17 +95,17 @@ export default async function AdminDashboardPage() {
             </Button>
           </Link>
           <Link href="/admin/dashboard/new">
-            <Button size="sm">
+            <Button size="sm" className="bg-teal-700 hover:bg-teal-800 text-white">
               <Plus className="h-4 w-4" />
-              إضافة سكن
+              إضافة سكن جديد
             </Button>
           </Link>
           <LogoutButton />
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Stats Cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -84,6 +121,7 @@ export default async function AdminDashboardPage() {
             </div>
           </CardContent>
         </Card>
+
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -99,6 +137,7 @@ export default async function AdminDashboardPage() {
             </div>
           </CardContent>
         </Card>
+
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -114,6 +153,7 @@ export default async function AdminDashboardPage() {
             </div>
           </CardContent>
         </Card>
+
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -125,6 +165,25 @@ export default async function AdminDashboardPage() {
                   {bookedCount}
                 </p>
                 <p className="text-xs text-slate-500">محجوز بالكامل</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* WhatsApp Clicks Card */}
+        <Card className="border-emerald-200 bg-emerald-50/40">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#25D366]/20 text-[#25D366]">
+                <MessageSquare className="h-5 w-5 text-emerald-700" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-emerald-900">
+                  {totalClicks}
+                </p>
+                <p className="text-xs text-emerald-700 font-medium">
+                  نقرات حجز واتساب
+                </p>
               </div>
             </div>
           </CardContent>
@@ -152,6 +211,15 @@ export default async function AdminDashboardPage() {
                 <th className="px-4 py-3 text-right font-medium text-slate-500 hidden md:table-cell">
                   السعر
                 </th>
+                <th className="px-4 py-3 text-right font-medium text-slate-500 hidden lg:table-cell">
+                  الأسرّة
+                </th>
+                <th className="px-4 py-3 text-right font-medium text-slate-500">
+                  نقرات واتساب
+                </th>
+                <th className="px-4 py-3 text-right font-medium text-slate-500 hidden xl:table-cell">
+                  هاتف المالك
+                </th>
                 <th className="px-4 py-3 text-right font-medium text-slate-500">
                   الحالة
                 </th>
@@ -164,7 +232,7 @@ export default async function AdminDashboardPage() {
               {listings.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={10}
                     className="px-4 py-16 text-center text-slate-400"
                   >
                     <div className="flex flex-col items-center justify-center gap-3">
@@ -187,10 +255,10 @@ export default async function AdminDashboardPage() {
                     key={property.id}
                     className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors"
                   >
-                    <td className="px-4 py-3 font-mono text-xs text-slate-600">
+                    <td className="px-4 py-3 font-mono text-xs font-bold text-slate-700">
                       {property.code}
                     </td>
-                    <td className="px-4 py-3 font-medium text-slate-900 max-w-[200px] truncate">
+                    <td className="px-4 py-3 font-medium text-slate-900 max-w-[180px] truncate">
                       {property.title}
                     </td>
                     <td className="px-4 py-3 hidden sm:table-cell">
@@ -203,8 +271,35 @@ export default async function AdminDashboardPage() {
                         {getGenderLabel(property.gender)}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 hidden md:table-cell text-slate-700">
+                    <td className="px-4 py-3 hidden md:table-cell text-slate-700 font-semibold">
                       {formatPrice(property.price)} ج
+                    </td>
+                    <td className="px-4 py-3 hidden lg:table-cell text-xs text-slate-600">
+                      <span className="font-bold text-emerald-700">
+                        {property.available_beds}
+                      </span>{" "}
+                      / {property.total_beds}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-xs font-bold text-emerald-800">
+                        📞 {property.whatsapp_clicks || 0}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 hidden xl:table-cell text-xs font-mono text-slate-600">
+                      {property.owner_phone ? (
+                        <a
+                          href={`https://wa.me/${property.owner_phone.replace(/\D/g, "")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:text-teal-700 hover:underline flex items-center gap-1"
+                          dir="ltr"
+                        >
+                          <Phone className="h-3 w-3 text-slate-400" />
+                          {property.owner_phone}
+                        </a>
+                      ) : (
+                        "—"
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <StatusDropdown
@@ -219,7 +314,11 @@ export default async function AdminDashboardPage() {
                           target="_blank"
                           title="معاينة كما يراها الطالب"
                         >
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-teal-700">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-slate-500 hover:text-teal-700 cursor-pointer"
+                          >
                             <Eye className="h-3.5 w-3.5" />
                           </Button>
                         </Link>
@@ -227,7 +326,11 @@ export default async function AdminDashboardPage() {
                           href={`/admin/dashboard/${property.id}/edit`}
                           title="تعديل السكن"
                         >
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-blue-700">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-slate-500 hover:text-blue-700 cursor-pointer"
+                          >
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
                         </Link>

@@ -1,5 +1,6 @@
 import type { Property } from "@/components/property/PropertyCard";
 import { createClient } from "./supabase/server";
+import { derivePropertyStatus } from "./utils";
 
 function extractStoragePath(imageUrl: string): string | null {
   try {
@@ -14,7 +15,9 @@ function extractStoragePath(imageUrl: string): string | null {
   }
 }
 
-export async function getAllProperties(): Promise<Property[]> {
+export async function getAllProperties(options?: {
+  forAdmin?: boolean;
+}): Promise<Property[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("properties")
@@ -26,10 +29,23 @@ export async function getAllProperties(): Promise<Property[]> {
     throw new Error(`تعذر جلب السكنات من قاعدة البيانات: ${error.message}`);
   }
 
-  return (data || []) as Property[];
+  const list = (data || []) as Property[];
+
+  // Defense-in-depth: Never expose owner_phone publicly
+  if (!options?.forAdmin) {
+    return list.map((item) => {
+      const { owner_phone, ...safeItem } = item;
+      return safeItem as Property;
+    });
+  }
+
+  return list;
 }
 
-export async function getPropertyById(id: string): Promise<Property | null> {
+export async function getPropertyById(
+  id: string,
+  options?: { forAdmin?: boolean }
+): Promise<Property | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("properties")
@@ -42,7 +58,17 @@ export async function getPropertyById(id: string): Promise<Property | null> {
     throw new Error(`تعذر جلب بيانات السكن: ${error.message}`);
   }
 
-  return (data || null) as Property | null;
+  if (!data) return null;
+
+  const item = data as Property;
+
+  // Defense-in-depth: Never expose owner_phone publicly
+  if (!options?.forAdmin) {
+    const { owner_phone, ...safeItem } = item;
+    return safeItem as Property;
+  }
+
+  return item;
 }
 
 export async function upsertProperty(
@@ -50,7 +76,14 @@ export async function upsertProperty(
 ): Promise<{ success: boolean; property?: Property; error?: string }> {
   try {
     const supabase = await createClient();
-    const { id, ...supabaseData } = propertyData;
+    const { id, ...rawSupabaseData } = propertyData;
+
+    // Derive status automatically from available_beds
+    const autoStatus = derivePropertyStatus(propertyData.available_beds);
+    const supabaseData = {
+      ...rawSupabaseData,
+      status: autoStatus,
+    };
 
     if (id) {
       const { data, error } = await supabase
@@ -79,6 +112,37 @@ export async function upsertProperty(
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "فشلت العملية في قاعدة البيانات";
     return { success: false, error: msg };
+  }
+}
+
+export async function recordWhatsAppClick(
+  propertyId: string
+): Promise<{ success: boolean }> {
+  try {
+    const supabase = await createClient();
+
+    // 1. Record event row in property_clicks
+    await supabase.from("property_clicks").insert({
+      property_id: propertyId,
+    });
+
+    // 2. Increment counter on the property record
+    const { data: currentProp } = await supabase
+      .from("properties")
+      .select("whatsapp_clicks")
+      .eq("id", propertyId)
+      .maybeSingle();
+
+    const currentCount = currentProp?.whatsapp_clicks || 0;
+    await supabase
+      .from("properties")
+      .update({ whatsapp_clicks: currentCount + 1 })
+      .eq("id", propertyId);
+
+    return { success: true };
+  } catch (e) {
+    console.warn("Could not record WhatsApp click:", e);
+    return { success: false };
   }
 }
 

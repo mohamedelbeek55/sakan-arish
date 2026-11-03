@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { ExternalLink } from "lucide-react";
+import { Play, ExternalLink } from "lucide-react";
 
 interface YouTubeEmbedProps {
   url: string;
@@ -41,29 +43,63 @@ export function extractYouTubeId(url: string): string | null {
 }
 
 export default function YouTubeEmbed({ url, className }: YouTubeEmbedProps) {
+  const [isPlaying, setIsPlaying] = useState(false);
   const videoId = extractYouTubeId(url);
 
   if (!videoId) return null;
 
   const isShorts = url.includes("/shorts/");
+  const thumbnailUrl = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
 
   return (
     <div className="space-y-2">
       <div
         className={cn(
-          "relative w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-900 shadow-sm",
+          "relative w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-900 shadow-sm group",
           isShorts ? "max-w-sm mx-auto aspect-[9/16]" : "aspect-video",
           className
         )}
       >
-        <iframe
-          className="absolute inset-0 h-full w-full"
-          src={`https://www.youtube.com/embed/${videoId}?rel=0`}
-          title="جولة فيديو للسكن"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
+        {isPlaying ? (
+          <iframe
+            className="absolute inset-0 h-full w-full"
+            src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`}
+            title="جولة فيديو للسكن"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsPlaying(true)}
+            className="absolute inset-0 h-full w-full block text-right cursor-pointer"
+            aria-label="تشغيل فيديو جولة السكن"
+          >
+            {/* Background Thumbnail */}
+            <Image
+              src={thumbnailUrl}
+              alt="معاينة فيديو السكن"
+              fill
+              className="object-cover opacity-85 transition-transform duration-300 group-hover:scale-105 group-hover:opacity-95"
+              sizes="(max-width: 768px) 100vw, 60vw"
+            />
+
+            {/* Dark overlay */}
+            <div className="absolute inset-0 bg-black/35 group-hover:bg-black/25 transition-colors" />
+
+            {/* Play Button Facade */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+              <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-red-600/90 text-white shadow-xl transition-all duration-300 group-hover:scale-110 group-hover:bg-red-600">
+                <Play className="h-7 w-7 sm:h-9 sm:w-9 fill-white translate-x-0.5" />
+              </div>
+              <span className="rounded-full bg-black/60 px-3.5 py-1 text-xs sm:text-sm font-semibold text-white backdrop-blur-xs">
+                اضغط لتشغيل جولة الفيديو ▶
+              </span>
+            </div>
+          </button>
+        )}
       </div>
+
       <div className="flex justify-start">
         <a
           href={url.startsWith("http") ? url : `https://${url}`}

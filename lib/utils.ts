@@ -64,6 +64,27 @@ export function getStatusStyles(status: string): string {
   return styles[status] || "";
 }
 
+export function derivePropertyStatus(
+  availableBeds: number
+): "available" | "one_bed_left" | "booked" {
+  if (availableBeds <= 0) return "booked";
+  if (availableBeds === 1) return "one_bed_left";
+  return "available";
+}
+
+export function normalizeArabicText(text: string): string {
+  if (!text) return "";
+  return text
+    .replace(/[\u064B-\u065F\u0670]/g, "") // remove tashkeel/harakat
+    .replace(/[أإآ]/g, "ا")
+    .replace(/ة/g, "ه")
+    .replace(/ى/g, "ي")
+    .replace(/ؤ/g, "و")
+    .replace(/ئ/g, "ي")
+    .trim()
+    .toLowerCase();
+}
+
 export function getWhatsAppNumber(): string {
   const num = process.env.NEXT_PUBLIC_ADMIN_WHATSAPP_NUMBER?.trim();
   if (!num) {

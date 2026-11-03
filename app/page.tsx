@@ -7,11 +7,15 @@ import { Building2, GraduationCap, Search as SearchIcon, ShieldCheck } from "luc
 import type { Property } from "@/components/property/PropertyCard";
 import { getAllProperties } from "@/lib/properties-store";
 
+import { normalizeArabicText } from "@/lib/utils";
+
 interface HomePageProps {
   searchParams: Promise<{
     area?: string;
     gender?: string;
     type?: string;
+    price?: string;
+    sort?: string;
     q?: string;
   }>;
 }
@@ -20,36 +24,80 @@ async function PropertyGrid({
   area,
   gender,
   type,
+  price,
+  sort = "newest",
   q,
 }: {
   area?: string;
   gender?: string;
   type?: string;
+  price?: string;
+  sort?: string;
   q?: string;
 }) {
   const allProperties = await getAllProperties();
 
-  const list = allProperties.filter((p) => {
+  const normalizedQuery = q ? normalizeArabicText(q) : "";
+
+  // 1. Filter
+  const filtered = allProperties.filter((p) => {
     if (area && area !== "all" && p.area !== area) return false;
     if (gender && gender !== "all" && p.gender !== gender) return false;
     if (type && type !== "all" && p.rental_type !== type) return false;
-    if (
-      q &&
-      !`${p.code} ${p.title} ${p.location_desc}`
-        .toLowerCase()
-        .includes(q.toLowerCase())
-    )
-      return false;
+
+    // Price range filtering
+    if (price && price !== "all") {
+      if (price === "under_1500" && p.price >= 1500) return false;
+      if (price === "1500_2500" && (p.price < 1500 || p.price > 2500)) return false;
+      if (price === "over_2500" && p.price <= 2500) return false;
+    }
+
+    // Normalized Arabic search (أ/ا, ة/ه, ى/ي, tashkeel)
+    if (normalizedQuery) {
+      const targetText = normalizeArabicText(
+        `${p.code} ${p.title} ${p.location_desc || ""} ${p.description || ""} ${p.area}`
+      );
+      if (!targetText.includes(normalizedQuery)) {
+        return false;
+      }
+    }
     return true;
   });
 
-  if (list.length === 0) {
+  // 2. Sort: available first, booked last; secondary sort by user choice
+  const sorted = [...filtered].sort((a, b) => {
+    // Primary tier: available & one_bed_left first (0), booked last (1)
+    const rankA = a.status === "booked" ? 1 : 0;
+    const rankB = b.status === "booked" ? 1 : 0;
+
+    if (rankA !== rankB) {
+      return rankA - rankB;
+    }
+
+    // Secondary tier: user-selected sort
+    if (sort === "price_asc") {
+      return a.price - b.price;
+    }
+    if (sort === "price_desc") {
+      return b.price - a.price;
+    }
+    if (sort === "walking_asc") {
+      const walkA = a.walking_minutes_to_university ?? 9999;
+      const walkB = b.walking_minutes_to_university ?? 9999;
+      return walkA - walkB;
+    }
+
+    // Default: newest first
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+
+  if (sorted.length === 0) {
     return (
       <div className="text-center py-16 space-y-3">
         <SearchIcon className="mx-auto h-12 w-12 text-slate-300" />
-        <h3 className="text-lg font-medium text-slate-600">لا توجد نتائج</h3>
+        <h3 className="text-lg font-medium text-slate-600">لا توجد نتائج مطابقة للبحث</h3>
         <p className="text-sm text-slate-400">
-          جرّب تغيير معايير البحث أو إزالة بعض الفلاتر
+          جرّب تغيير معايير البحث، إزالة بعض الفلاتر، أو استكشاف مناطق أخرى
         </p>
       </div>
     );
@@ -57,7 +105,7 @@ async function PropertyGrid({
 
   return (
     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-      {list.map((property) => (
+      {sorted.map((property) => (
         <PropertyCard key={property.id} property={property} />
       ))}
     </div>
@@ -168,6 +216,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             area={params.area}
             gender={params.gender}
             type={params.type}
+            price={params.price}
+            sort={params.sort}
             q={params.q}
           />
         </Suspense>

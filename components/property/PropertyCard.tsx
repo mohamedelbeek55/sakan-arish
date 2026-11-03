@@ -30,6 +30,17 @@ export interface Property {
   images: string[];
   youtube_video_url: string | null;
   description: string | null;
+  walking_minutes_to_university?: number | null;
+  maps_url?: string | null;
+  floor?: number | null;
+  furnished?: boolean;
+  utilities_included?: boolean;
+  deposit?: number | null;
+  contract_months?: number | null;
+  students_per_room?: number | null;
+  last_verified_at?: string | null;
+  owner_phone?: string | null;
+  whatsapp_clicks?: number;
   created_at: string;
 }
 
@@ -92,6 +103,11 @@ export default function PropertyCard({ property }: PropertyCardProps) {
           {property.rooms_count ? (
             <span className="inline-flex items-center rounded-md bg-amber-50 border border-amber-200 px-2 py-0.5 text-xs font-semibold text-amber-800">
               {property.rooms_count} {property.rooms_count === 1 ? "غرفة" : property.rooms_count === 2 ? "غرفتان" : "غرف"}
+            </span>
+          ) : null}
+          {property.walking_minutes_to_university ? (
+            <span className="inline-flex items-center rounded-md bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+              🚶‍♂️ {property.walking_minutes_to_university} د للجامعة
             </span>
           ) : null}
         </div>

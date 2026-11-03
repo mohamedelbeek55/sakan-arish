@@ -16,7 +16,7 @@ export default async function EditPropertyPage({
   const { id } = await params;
   await requireAdmin();
 
-  const found = await getPropertyById(id);
+  const found = await getPropertyById(id, { forAdmin: true });
 
   if (!found) {
     notFound();

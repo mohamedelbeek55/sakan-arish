@@ -71,21 +71,16 @@ export default function Navbar() {
             </Button>
           </Link>
 
-          <a
-            href={buildOwnerWhatsAppUrl(whatsappNumber)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mr-1"
-          >
+          <Link href="/list-your-property" className="mr-1">
             <Button
               size="sm"
               variant="outline"
-              className="gap-1.5 border-teal-200 text-teal-800 bg-teal-50/70 hover:bg-teal-100 hover:text-teal-900 font-semibold"
+              className="gap-1.5 border-teal-200 text-teal-800 bg-teal-50/70 hover:bg-teal-100 hover:text-teal-900 font-semibold cursor-pointer"
             >
               <Building2 className="h-4 w-4 text-teal-600" />
               صاحب سكن؟ أعلن معنا
             </Button>
-          </a>
+          </Link>
 
           {isAdmin && (
             <div className="flex items-center gap-2 mr-2 pr-2 border-r border-slate-200">
@@ -141,20 +136,18 @@ export default function Navbar() {
               </Button>
             </Link>
 
-            <a
-              href={buildOwnerWhatsAppUrl(whatsappNumber)}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/list-your-property"
               onClick={() => setMobileMenuOpen(false)}
             >
               <Button
                 variant="outline"
-                className="w-full justify-start gap-2 border-teal-200 text-teal-800 bg-teal-50/70 hover:bg-teal-100 font-semibold"
+                className="w-full justify-start gap-2 border-teal-200 text-teal-800 bg-teal-50/70 hover:bg-teal-100 font-semibold cursor-pointer"
               >
                 <Building2 className="h-4 w-4 text-teal-600" />
                 صاحب سكن؟ أعلن معنا
               </Button>
-            </a>
+            </Link>
 
             {isAdmin && (
               <>

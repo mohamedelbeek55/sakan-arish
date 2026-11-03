@@ -7,6 +7,7 @@ import {
   updatePropertyStatus,
   deleteProperty,
   getPropertyById,
+  recordWhatsAppClick,
 } from "@/lib/properties-store";
 import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -76,9 +77,62 @@ const propertyServerSchema = z
       .array(z.string())
       .max(10, "الحد الأقصى المسموح به هو 10 صور فقط")
       .default([]),
+    walking_minutes_to_university: z
+      .number()
+      .int()
+      .min(0, "دقائق السير لا يمكن أن تكون سالبة")
+      .max(180, "دقائق السير غير منطقية")
+      .optional()
+      .nullable(),
+    maps_url: z
+      .string()
+      .optional()
+      .nullable()
+      .transform((val) => {
+        if (!val || !val.trim()) return null;
+        const trimmed = val.trim();
+        if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+          return `https://${trimmed}`;
+        }
+        return trimmed;
+      }),
+    floor: z
+      .number()
+      .int()
+      .min(-2, "الدور غير صالح")
+      .max(40, "الدور غير صالح")
+      .optional()
+      .nullable(),
+    furnished: z.boolean().default(true),
+    utilities_included: z.boolean().default(false),
+    deposit: z
+      .number()
+      .min(0, "مبلغ التأمين لا يمكن أن يكون سالباً")
+      .optional()
+      .nullable(),
+    contract_months: z
+      .number()
+      .int()
+      .min(1, "مدة العقد يجب أن تكون شهراً على الأقل")
+      .max(36, "مدة العقد غير صالحة")
+      .optional()
+      .nullable(),
+    students_per_room: z
+      .number()
+      .int()
+      .min(1, "سعة الغرفة يجب أن تكون 1 على الأقل")
+      .max(10, "سعة الغرفة غير منطقية")
+      .optional()
+      .nullable(),
+    last_verified_at: z.string().optional().nullable(),
+    owner_phone: z
+      .string()
+      .optional()
+      .nullable()
+      .transform((val) => (val?.trim() ? val.trim() : null)),
     status: z
       .enum(["available", "one_bed_left", "booked"])
-      .default("available"),
+      .optional(),
   })
   .refine((data) => data.available_beds <= data.total_beds, {
     message: "عدد الأسرّة المتاحة لا يمكن أن يتجاوز إجمالي الأسرّة",
@@ -145,6 +199,7 @@ export async function savePropertyAction(rawData: unknown): Promise<{
   // 4. Save to Supabase
   const result = await upsertProperty({
     ...data,
+    status: data.status || "available",
     location_desc: data.location_desc || "",
   });
 
@@ -209,5 +264,19 @@ export async function deletePropertyAction(
     revalidatePath("/admin/dashboard");
   }
 
+  return result;
+}
+
+export async function recordWhatsAppClickAction(
+  propertyId: string
+): Promise<{ success: boolean }> {
+  if (!propertyId || typeof propertyId !== "string") {
+    return { success: false };
+  }
+
+  const result = await recordWhatsAppClick(propertyId);
+  if (result.success) {
+    revalidatePath("/admin/dashboard");
+  }
   return result;
 }

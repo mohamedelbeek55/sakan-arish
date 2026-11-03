@@ -38,14 +38,12 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <a
-                  href={buildOwnerWhatsAppUrl(whatsappNumber)}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Link
+                  href="/list-your-property"
                   className="text-teal-700 font-semibold hover:underline"
                 >
                   صاحب سكن؟ أعلن معنا
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

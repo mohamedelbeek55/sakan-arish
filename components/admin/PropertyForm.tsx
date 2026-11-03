@@ -5,7 +5,18 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, X, ImagePlus, AlertCircle } from "lucide-react";
+import {
+  Loader2,
+  X,
+  ImagePlus,
+  AlertCircle,
+  Footprints,
+  MapPin,
+  Building,
+  Shield,
+  Phone,
+  Sparkles,
+} from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +31,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/client";
-import { AMENITY_OPTIONS } from "@/lib/utils";
+import {
+  AMENITY_OPTIONS,
+  derivePropertyStatus,
+  getStatusLabel,
+  getStatusStyles,
+} from "@/lib/utils";
 import type { Property } from "@/components/property/PropertyCard";
 import { savePropertyAction } from "@/app/actions/property";
 import { extractYouTubeId } from "@/components/property/YouTubeEmbed";
@@ -45,6 +61,21 @@ const propertySchema = z
     available_beds: z.number().int().min(0, "الأسرّة المتاحة لا يمكن أن تكون سالبة"),
     youtube_video_url: z.string().optional().or(z.literal("")),
     description: z.string().optional(),
+    walking_minutes_to_university: z
+      .number()
+      .int()
+      .min(0)
+      .max(180)
+      .optional()
+      .nullable(),
+    maps_url: z.string().optional().or(z.literal("")),
+    floor: z.number().int().min(-2).max(40).optional().nullable(),
+    furnished: z.boolean().default(true),
+    utilities_included: z.boolean().default(false),
+    deposit: z.number().min(0).optional().nullable(),
+    contract_months: z.number().int().min(1).max(36).optional().nullable(),
+    students_per_room: z.number().int().min(1).max(10).optional().nullable(),
+    owner_phone: z.string().optional().or(z.literal("")),
   })
   .refine((data) => data.available_beds <= data.total_beds, {
     message: "عدد الأسرّة المتاحة لا يمكن أن يتجاوز إجمالي الأسرّة",
@@ -130,7 +161,7 @@ export default function PropertyForm({ property }: PropertyFormProps) {
     watch,
     formState: { errors },
   } = useForm<PropertyFormValues>({
-    resolver: zodResolver(propertySchema),
+    resolver: zodResolver(propertySchema as any),
     defaultValues: {
       code: property?.code || "",
       title: property?.title || "",
@@ -145,9 +176,19 @@ export default function PropertyForm({ property }: PropertyFormProps) {
       rooms_count: property?.rooms_count || 1,
       location_desc: property?.location_desc || "",
       total_beds: property?.total_beds || 1,
-      available_beds: property?.available_beds || 1,
+      available_beds: property?.available_beds ?? 1,
       youtube_video_url: property?.youtube_video_url || "",
       description: property?.description || "",
+      walking_minutes_to_university:
+        property?.walking_minutes_to_university ?? null,
+      maps_url: property?.maps_url || "",
+      floor: property?.floor ?? null,
+      furnished: property?.furnished ?? true,
+      utilities_included: property?.utilities_included ?? false,
+      deposit: property?.deposit ?? null,
+      contract_months: property?.contract_months ?? 10,
+      students_per_room: property?.students_per_room ?? 2,
+      owner_phone: property?.owner_phone || "",
     },
   });
 
@@ -155,6 +196,13 @@ export default function PropertyForm({ property }: PropertyFormProps) {
   const watchedGender = watch("gender");
   const watchedRentalType = watch("rental_type");
   const watchedYoutubeUrl = watch("youtube_video_url");
+  const watchedAvailableBeds = watch("available_beds") ?? 1;
+  const watchedTotalBeds = watch("total_beds") ?? 1;
+  const watchedFurnished = watch("furnished");
+  const watchedUtilities = watch("utilities_included");
+
+  // Automatically derive property status
+  const derivedStatus = derivePropertyStatus(watchedAvailableBeds);
 
   const toggleAmenity = (amenity: string) => {
     setSelectedAmenities((prev) =>
@@ -169,10 +217,8 @@ export default function PropertyForm({ property }: PropertyFormProps) {
     if (!files || files.length === 0) return;
 
     setUploadError(null);
-
     const fileList = Array.from(files);
 
-    // 1. Limit total images to 10
     if (images.length + fileList.length > 10) {
       setUploadError(
         `الحد الأقصى المسموح به هو 10 صور فقط. لديك بالفعل ${images.length} صور.`
@@ -186,7 +232,6 @@ export default function PropertyForm({ property }: PropertyFormProps) {
     const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp"];
 
     for (const file of fileList) {
-      // 2. Validate file type
       if (!allowedMimeTypes.includes(file.type)) {
         setUploadError(
           `الملف "${file.name}" غير مدعوم. يرجى اختيار صور بصيغة JPG أو PNG أو WebP فقط.`
@@ -194,7 +239,6 @@ export default function PropertyForm({ property }: PropertyFormProps) {
         continue;
       }
 
-      // 3. Validate file size (max 10MB before compression)
       if (file.size > 10 * 1024 * 1024) {
         setUploadError(
           `حجم الصورة "${file.name}" كبير جداً (أكبر من 10 ميجابايت).`
@@ -203,13 +247,10 @@ export default function PropertyForm({ property }: PropertyFormProps) {
       }
 
       try {
-        // 4. Client-side compression to WebP (max 1600px, quality 0.82)
         const compressedBlob = await compressImage(file);
-
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.webp`;
         const filePath = `properties/${fileName}`;
 
-        // 5. Upload directly to Supabase Storage
         const { error: uploadErr } = await supabase.storage
           .from("property-images")
           .upload(filePath, compressedBlob, {
@@ -258,15 +299,26 @@ export default function PropertyForm({ property }: PropertyFormProps) {
         cleanVideoUrl = `https://${cleanVideoUrl}`;
       }
 
+      let cleanMapsUrl = data.maps_url?.trim() || null;
+      if (
+        cleanMapsUrl &&
+        !cleanMapsUrl.startsWith("http://") &&
+        !cleanMapsUrl.startsWith("https://")
+      ) {
+        cleanMapsUrl = `https://${cleanMapsUrl}`;
+      }
+
       const payload = {
         ...data,
         location_desc: data.location_desc || "",
         rooms_count: data.rooms_count || 1,
-        status: property?.status || "available",
+        status: derivedStatus,
         amenities: selectedAmenities,
         images,
         youtube_video_url: cleanVideoUrl,
+        maps_url: cleanMapsUrl,
         description: data.description || null,
+        owner_phone: data.owner_phone?.trim() || null,
         id: property?.id,
       };
 
@@ -316,7 +368,7 @@ export default function PropertyForm({ property }: PropertyFormProps) {
             <Label htmlFor="title">عنوان الإعلان</Label>
             <Input
               id="title"
-              placeholder="مثال: شقة 3 غرف بالمساعيد"
+              placeholder="مثال: شقة 3 غرف بالمساعيد قريبة من جامعة سيناء"
               {...register("title")}
             />
             {errors.title && (
@@ -354,7 +406,7 @@ export default function PropertyForm({ property }: PropertyFormProps) {
 
           {/* Gender */}
           <div className="space-y-1.5">
-            <Label>النوع</Label>
+            <Label>نوع السكن (شباب / بنات)</Label>
             <Select
               value={watchedGender}
               onValueChange={(v) =>
@@ -364,7 +416,7 @@ export default function PropertyForm({ property }: PropertyFormProps) {
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="اختر النوع" />
+                <SelectValue placeholder="اختر الفئة" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="male">سكن شباب</SelectItem>
@@ -418,40 +470,54 @@ export default function PropertyForm({ property }: PropertyFormProps) {
               <p className="text-xs text-red-500">{errors.price.message}</p>
             )}
           </div>
+        </div>
+      </div>
 
-          {/* Rooms Count */}
+      {/* Specifications & Extended Columns */}
+      <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
+        <h3 className="font-semibold text-slate-900">مواصفات السكن والجامعة</h3>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          {/* Walking minutes to university */}
           <div className="space-y-1.5">
-            <Label htmlFor="rooms_count">عدد الغرف في الشقة</Label>
+            <Label htmlFor="walking_minutes_to_university">
+              وقت المشي للجامعة (بالدقائق)
+            </Label>
             <Input
-              id="rooms_count"
+              id="walking_minutes_to_university"
               type="number"
-              min={1}
-              placeholder="مثال: 3"
-              {...register("rooms_count", { valueAsNumber: true })}
+              placeholder="مثال: 7"
+              {...register("walking_minutes_to_university", {
+                valueAsNumber: true,
+              })}
             />
-            {errors.rooms_count && (
-              <p className="text-xs text-red-500">{errors.rooms_count.message}</p>
-            )}
           </div>
 
-          {/* Location Description */}
+          {/* Floor */}
           <div className="space-y-1.5">
-            <Label htmlFor="location_desc">وصف الموقع التقريبي (اختياري)</Label>
+            <Label htmlFor="floor">الدور / الطابق</Label>
             <Input
-              id="location_desc"
-              placeholder="مثال: المساعيد - 4 دقائق من بوابة الجامعة، أمام سوبرماركت الفيروز"
-              {...register("location_desc")}
+              id="floor"
+              type="number"
+              placeholder="0 للأرضي، 1، 2، 3..."
+              {...register("floor", { valueAsNumber: true })}
             />
-            {errors.location_desc && (
-              <p className="text-xs text-red-500">
-                {errors.location_desc.message}
-              </p>
-            )}
+          </div>
+
+          {/* Students per room */}
+          <div className="space-y-1.5">
+            <Label htmlFor="students_per_room">سعة الغرفة (كم طالب بالمتوسط)</Label>
+            <Input
+              id="students_per_room"
+              type="number"
+              placeholder="مثال: 2"
+              {...register("students_per_room", { valueAsNumber: true })}
+            />
           </div>
 
           {/* Total Beds */}
           <div className="space-y-1.5">
-            <Label htmlFor="total_beds">إجمالي الأسرّة في السكن</Label>
+            <Label htmlFor="total_beds">إجمالي الأسرّة في الشقة</Label>
             <Input
               id="total_beds"
               type="number"
@@ -459,9 +525,7 @@ export default function PropertyForm({ property }: PropertyFormProps) {
               {...register("total_beds", { valueAsNumber: true })}
             />
             {errors.total_beds && (
-              <p className="text-xs text-red-500">
-                {errors.total_beds.message}
-              </p>
+              <p className="text-xs text-red-500">{errors.total_beds.message}</p>
             )}
           </div>
 
@@ -480,161 +544,258 @@ export default function PropertyForm({ property }: PropertyFormProps) {
               </p>
             )}
           </div>
+
+          {/* Rooms Count */}
+          <div className="space-y-1.5">
+            <Label htmlFor="rooms_count">عدد الغرف في السكن</Label>
+            <Input
+              id="rooms_count"
+              type="number"
+              min={1}
+              {...register("rooms_count", { valueAsNumber: true })}
+            />
+          </div>
+
+          {/* Deposit */}
+          <div className="space-y-1.5">
+            <Label htmlFor="deposit">مبلغ التأمين (ج.م) - اختياري</Label>
+            <Input
+              id="deposit"
+              type="number"
+              placeholder="0 أو فارغ إذا بدون تأمين"
+              {...register("deposit", { valueAsNumber: true })}
+            />
+          </div>
+
+          {/* Contract months */}
+          <div className="space-y-1.5">
+            <Label htmlFor="contract_months">مدة العقد (شهور)</Label>
+            <Input
+              id="contract_months"
+              type="number"
+              placeholder="مثال: 10"
+              {...register("contract_months", { valueAsNumber: true })}
+            />
+          </div>
+
+          {/* Maps URL */}
+          <div className="space-y-1.5">
+            <Label htmlFor="maps_url">رابط خرائط Google (Maps URL)</Label>
+            <Input
+              id="maps_url"
+              placeholder="https://maps.google.com/..."
+              dir="ltr"
+              {...register("maps_url")}
+            />
+          </div>
+        </div>
+
+        {/* Checkboxes: Furnished & Utilities Included */}
+        <div className="pt-2 flex flex-wrap gap-6 border-t border-slate-100">
+          <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700">
+            <Checkbox
+              checked={watchedFurnished}
+              onCheckedChange={(checked) => setValue("furnished", !!checked)}
+            />
+            <span>مفروشة بالكامل (أثاث، مراتب، أجهزة)</span>
+          </label>
+
+          <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700">
+            <Checkbox
+              checked={watchedUtilities}
+              onCheckedChange={(checked) =>
+                setValue("utilities_included", !!checked)
+              }
+            />
+            <span>السعر شامل الفواتير (كهرباء / مياه / غاز / إنترنت)</span>
+          </label>
+        </div>
+
+        {/* Derived status info box */}
+        <div className="rounded-xl border border-teal-100 bg-teal-50/60 p-3.5 flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-teal-600" />
+            <span className="font-semibold text-teal-900">
+              حالة السكن (محسوبة تلقائياً من الأسرّة المتاحة):
+            </span>
+          </div>
+          <span
+            className={`inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-bold ${getStatusStyles(
+              derivedStatus
+            )}`}
+          >
+            {getStatusLabel(derivedStatus)} ({watchedAvailableBeds} من أصل{" "}
+            {watchedTotalBeds})
+          </span>
+        </div>
+      </div>
+
+      {/* Admin-only info */}
+      <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-5 space-y-3">
+        <div className="flex items-center gap-2">
+          <Shield className="h-4 w-4 text-amber-700" />
+          <h3 className="font-bold text-amber-900 text-sm">
+            بيانات سرية خاصة بالمشرفين (Admin-Only)
+          </h3>
+        </div>
+        <p className="text-xs text-amber-700 leading-relaxed">
+          هذه البيانات تظهر لك فقط في لوحة التحكم ولن تظهر للطلاب أو الزوار نهائياً في أي مكان.
+        </p>
+        <div className="max-w-md space-y-1.5">
+          <Label htmlFor="owner_phone">رقم هاتف / واتساب المالك الحقيقي</Label>
+          <Input
+            id="owner_phone"
+            placeholder="01XXXXXXXXX"
+            dir="ltr"
+            className="bg-white text-right"
+            {...register("owner_phone")}
+          />
+        </div>
+      </div>
+
+      {/* Location Desc & Video */}
+      <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
+        <h3 className="font-semibold text-slate-900">الموقع والفيديو والوصف</h3>
+
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="location_desc">وصف الموقع التقريبي والعلامة المميزة</Label>
+            <Input
+              id="location_desc"
+              placeholder="مثال: المساعيد - 4 دقائق من بوابة الجامعة، أمام سوبرماركت الفيروز"
+              {...register("location_desc")}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="youtube_video_url">
+              رابط جولة الفيديو من يوتيوب (يوتيوب أو يوتيوب شورتس - اختياري)
+            </Label>
+            <Input
+              id="youtube_video_url"
+              placeholder="https://www.youtube.com/watch?v=... أو https://youtube.com/shorts/..."
+              dir="ltr"
+              {...register("youtube_video_url")}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="description">وصف تفصيلي للسكن (اختياري)</Label>
+            <Textarea
+              id="description"
+              rows={4}
+              placeholder="اكتب تفاصيل إضافية عن السكن، الهدوء، العمارة، القرب من الخدمات..."
+              {...register("description")}
+            />
+          </div>
         </div>
       </div>
 
       {/* Amenities */}
       <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
         <h3 className="font-semibold text-slate-900">المرافق والخدمات</h3>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {AMENITY_OPTIONS.map((amenity) => (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {AMENITY_OPTIONS.map((item) => (
             <label
-              key={amenity.value}
-              className="flex items-center gap-2 cursor-pointer"
+              key={item.value}
+              className="flex items-center gap-2 p-2.5 rounded-lg border border-slate-100 bg-slate-50/50 hover:bg-slate-50 cursor-pointer text-xs sm:text-sm text-slate-700 transition"
             >
               <Checkbox
-                checked={selectedAmenities.includes(amenity.value)}
-                onCheckedChange={() => toggleAmenity(amenity.value)}
+                checked={selectedAmenities.includes(item.value)}
+                onCheckedChange={() => toggleAmenity(item.value)}
               />
-              <span className="text-sm text-slate-700">{amenity.label}</span>
+              <span>{item.label}</span>
             </label>
           ))}
         </div>
       </div>
 
-      {/* Images */}
+      {/* Images Upload */}
       <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-slate-900">
-            الصور ({images.length} / 10)
-          </h3>
-          <span className="text-xs text-slate-400">
-            يتم ضغط الصور تلقائياً لصيغة WebP لتسريع التصفح
+          <h3 className="font-semibold text-slate-900">صور السكن</h3>
+          <span className="text-xs text-slate-500 font-medium">
+            {images.length} من 10 صور كحد أقصى
           </span>
         </div>
 
         {uploadError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700 flex items-start gap-2">
-            <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5 text-red-600" />
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700 flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 flex-shrink-0 text-red-600" />
             <span>{uploadError}</span>
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-          {images.map((img, i) => (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {images.map((img, index) => (
             <div
-              key={i}
-              className="relative aspect-square overflow-hidden rounded-lg border border-slate-200 bg-slate-50 group"
+              key={index}
+              className="relative aspect-[4/3] rounded-lg overflow-hidden border border-slate-200 bg-slate-100 group"
             >
               <Image
                 src={img}
-                alt={`صورة ${i + 1}`}
+                alt={`صورة ${index + 1}`}
                 fill
                 className="object-cover"
-                sizes="150px"
+                sizes="(max-width: 640px) 50vw, 25vw"
               />
               <button
                 type="button"
-                onClick={() => removeImage(i)}
-                className="absolute top-1.5 left-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white opacity-0 transition group-hover:opacity-100 shadow-sm"
-                title="حذف الصورة"
+                onClick={() => removeImage(index)}
+                className="absolute top-1.5 left-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-white shadow-sm opacity-90 hover:opacity-100 transition cursor-pointer"
+                aria-label="حذف الصورة"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
             </div>
           ))}
 
-          {/* Upload Button */}
           {images.length < 10 && (
-            <label className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 text-slate-400 transition hover:border-teal-400 hover:text-teal-600">
+            <label className="flex flex-col items-center justify-center aspect-[4/3] rounded-lg border-2 border-dashed border-slate-200 hover:border-teal-500 hover:bg-teal-50/20 transition cursor-pointer text-slate-400 hover:text-teal-700">
               {uploading ? (
-                <div className="flex flex-col items-center gap-1.5">
-                  <Loader2 className="h-6 w-6 animate-spin text-teal-600" />
-                  <span className="text-[11px] text-slate-500">جاري الضغط والرفع...</span>
+                <div className="flex flex-col items-center gap-1.5 text-xs text-teal-700">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                  <span>جاري الضغط والرفع...</span>
                 </div>
               ) : (
-                <>
-                  <ImagePlus className="h-6 w-6 mb-1" />
-                  <span className="text-xs font-medium">رفع صور</span>
-                  <span className="text-[10px] text-slate-400 mt-0.5">JPG, PNG, WebP</span>
-                </>
+                <div className="flex flex-col items-center gap-1.5 text-xs">
+                  <ImagePlus className="h-6 w-6" />
+                  <span className="font-semibold">إضافة صور</span>
+                  <span className="text-[10px] text-slate-400">
+                    JPG أو PNG أو WebP
+                  </span>
+                </div>
               )}
               <input
                 type="file"
-                accept="image/jpeg,image/png,image/webp"
                 multiple
+                accept="image/jpeg,image/png,image/webp"
                 className="hidden"
-                onChange={handleImageUpload}
                 disabled={uploading}
+                onChange={handleImageUpload}
               />
             </label>
           )}
         </div>
       </div>
 
-      {/* YouTube & Description */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
-        <h3 className="font-semibold text-slate-900">معلومات إضافية</h3>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="youtube_video_url">رابط فيديو يوتيوب أو Shorts (اختياري)</Label>
-          <Input
-            id="youtube_video_url"
-            placeholder="مثال: https://youtube.com/shorts/... أو https://youtu.be/..."
-            dir="ltr"
-            {...register("youtube_video_url")}
-          />
-          {watchedYoutubeUrl && watchedYoutubeUrl.trim() && (
-            extractYouTubeId(watchedYoutubeUrl) ? (
-              <p className="text-xs text-emerald-600 font-medium">
-                ✓ تم التعرف على رابط يوتيوب بنجاح (سيظهر المشغل في صفحة السكن)
-              </p>
-            ) : (
-              <p className="text-xs text-amber-600">
-                تأكد من كتابة رابط يوتيوب صحيح (يدعم الفيديوهات العادية وروابط Shorts)
-              </p>
-            )
-          )}
-          {errors.youtube_video_url && (
-            <p className="text-xs text-red-500">
-              {errors.youtube_video_url.message}
-            </p>
-          )}
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="description">وصف تفصيلي (اختياري)</Label>
-          <Textarea
-            id="description"
-            rows={4}
-            placeholder="أضف وصفاً تفصيلياً للسكن..."
-            {...register("description")}
-          />
-        </div>
-      </div>
-
-      {/* Submit */}
-      <div className="flex items-center gap-3">
-        <Button type="submit" disabled={isPending || uploading} className="min-w-[140px]">
-          {isPending ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              جاري الحفظ...
-            </>
-          ) : property ? (
-            "حفظ التعديلات"
-          ) : (
-            "إضافة السكن"
-          )}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.push("/admin/dashboard")}
-        >
-          إلغاء
-        </Button>
-      </div>
+      {/* Submit Button */}
+      <Button
+        type="submit"
+        disabled={isPending || uploading}
+        className="w-full h-11 bg-teal-700 hover:bg-teal-800 text-white font-bold text-base rounded-xl transition shadow-xs cursor-pointer"
+      >
+        {isPending ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin ml-2" />
+            جاري حفظ البيانات...
+          </>
+        ) : property ? (
+          "تحديث بيانات السكن"
+        ) : (
+          "إضافة السكن الآن"
+        )}
+      </Button>
     </form>
   );
 }
