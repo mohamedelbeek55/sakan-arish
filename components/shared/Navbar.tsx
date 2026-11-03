@@ -6,29 +6,32 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { buildOwnerWhatsAppUrl } from "@/lib/utils";
+import { buildOwnerWhatsAppUrl, getWhatsAppNumber } from "@/lib/utils";
 
 export default function Navbar() {
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const whatsappNumber =
-    process.env.NEXT_PUBLIC_ADMIN_WHATSAPP_NUMBER || "201271759984";
+  const whatsappNumber = getWhatsAppNumber();
 
   useEffect(() => {
-    // Check local session cookie
-    if (document.cookie.includes("admin_session=true")) {
-      setIsAdmin(true);
-    }
-    // Check Supabase session
     const supabase = createClient();
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setIsAdmin(true);
+      setIsAdmin(!!session);
     });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAdmin(!!session);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleLogout = async () => {
-    document.cookie = "admin_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=0;";
     const supabase = createClient();
     await supabase.auth.signOut();
     setIsAdmin(false);

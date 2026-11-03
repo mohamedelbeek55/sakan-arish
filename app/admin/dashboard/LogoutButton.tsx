@@ -21,9 +21,6 @@ export default function LogoutButton({
 
   const handleLogout = () => {
     startTransition(async () => {
-      // Clear local session cookie
-      document.cookie = "admin_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=0;";
-      
       // Sign out from Supabase Auth
       try {
         await supabase.auth.signOut();

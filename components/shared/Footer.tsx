@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { Building2 } from "lucide-react";
-import { buildOwnerWhatsAppUrl } from "@/lib/utils";
+import { buildOwnerWhatsAppUrl, getWhatsAppNumber } from "@/lib/utils";
 
 export default function Footer() {
-  const whatsappNumber =
-    process.env.NEXT_PUBLIC_ADMIN_WHATSAPP_NUMBER || "201271759984";
+  const whatsappNumber = getWhatsAppNumber();
 
   return (
     <footer className="border-t border-slate-200 bg-slate-50/50">

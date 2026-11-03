@@ -1,6 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
-import { redirect, notFound } from "next/navigation";
+import { requireAdmin } from "@/lib/auth";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import PropertyForm from "@/components/admin/PropertyForm";
@@ -15,18 +14,7 @@ export default async function EditPropertyPage({
   params,
 }: EditPropertyPageProps) {
   const { id } = await params;
-  const cookieStore = await cookies();
-  const hasAdminCookie = cookieStore.get("admin_session")?.value === "true";
-
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user && !hasAdminCookie) {
-    redirect("/admin/login");
-  }
+  await requireAdmin();
 
   const found = await getPropertyById(id);
 

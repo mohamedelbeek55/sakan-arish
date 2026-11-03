@@ -1,6 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { requireAdmin } from "@/lib/auth";
 import Link from "next/link";
 import {
   Building2,
@@ -30,18 +28,7 @@ import type { Property } from "@/components/property/PropertyCard";
 import { getAllProperties } from "@/lib/properties-store";
 
 export default async function AdminDashboardPage() {
-  const cookieStore = await cookies();
-  const hasAdminCookie = cookieStore.get("admin_session")?.value === "true";
-
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user && !hasAdminCookie) {
-    redirect("/admin/login");
-  }
+  await requireAdmin();
 
   const listings = await getAllProperties();
   const totalListings = listings.length;

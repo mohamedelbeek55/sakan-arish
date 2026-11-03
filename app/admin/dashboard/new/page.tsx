@@ -1,22 +1,10 @@
-import { createClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { requireAdmin } from "@/lib/auth";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import PropertyForm from "@/components/admin/PropertyForm";
 
 export default async function NewPropertyPage() {
-  const cookieStore = await cookies();
-  const hasAdminCookie = cookieStore.get("admin_session")?.value === "true";
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user && !hasAdminCookie) {
-    redirect("/admin/login");
-  }
+  await requireAdmin();
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">

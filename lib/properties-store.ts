@@ -1,198 +1,147 @@
-import fs from "fs/promises";
-import path from "path";
 import type { Property } from "@/components/property/PropertyCard";
 import { createClient } from "./supabase/server";
 
-const DATA_FILE = path.join(process.cwd(), "data", "properties.json");
-
-function isSupabaseConfigured(): boolean {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-  return url.length > 0 && !url.includes("your-project") && !url.includes("placeholder");
-}
-
-export async function getLocalProperties(): Promise<Property[]> {
+function extractStoragePath(imageUrl: string): string | null {
   try {
-    const raw = await fs.readFile(DATA_FILE, "utf-8");
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) {
-      return parsed;
+    const marker = "/property-images/";
+    const idx = imageUrl.indexOf(marker);
+    if (idx !== -1) {
+      return decodeURIComponent(imageUrl.substring(idx + marker.length).split("?")[0]);
     }
+    return null;
   } catch {
-    try {
-      await fs.mkdir(path.dirname(DATA_FILE), { recursive: true });
-      await fs.writeFile(DATA_FILE, "[]", "utf-8");
-    } catch {
-      // ignore
-    }
-  }
-  return [];
-}
-
-export async function saveLocalProperties(properties: Property[]): Promise<void> {
-  try {
-    await fs.mkdir(path.dirname(DATA_FILE), { recursive: true });
-    await fs.writeFile(DATA_FILE, JSON.stringify(properties, null, 2), "utf-8");
-  } catch (err) {
-    console.error("Failed to write to properties.json:", err);
+    return null;
   }
 }
 
 export async function getAllProperties(): Promise<Property[]> {
-  if (isSupabaseConfigured()) {
-    try {
-      const supabase = await createClient();
-      const { data, error } = await supabase
-        .from("properties")
-        .select("*")
-        .order("created_at", { ascending: false });
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("properties")
+    .select("*")
+    .order("created_at", { ascending: false });
 
-      if (!error && data && data.length > 0) {
-        return data as Property[];
-      }
-    } catch {
-      // Fallback to local
-    }
+  if (error) {
+    console.error("Database error fetching properties:", error);
+    throw new Error(`تعذر جلب السكنات من قاعدة البيانات: ${error.message}`);
   }
-  return await getLocalProperties();
+
+  return (data || []) as Property[];
 }
 
 export async function getPropertyById(id: string): Promise<Property | null> {
-  if (isSupabaseConfigured()) {
-    try {
-      const supabase = await createClient();
-      const { data, error } = await supabase
-        .from("properties")
-        .select("*")
-        .eq("id", id)
-        .single();
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("properties")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
 
-      if (!error && data) {
-        return data as Property;
-      }
-    } catch {
-      // Fallback
-    }
+  if (error) {
+    console.error(`Database error fetching property [${id}]:`, error);
+    throw new Error(`تعذر جلب بيانات السكن: ${error.message}`);
   }
 
-  const locals = await getLocalProperties();
-  return locals.find((p) => p.id === id) || null;
+  return (data || null) as Property | null;
 }
 
 export async function upsertProperty(
   propertyData: Omit<Property, "id" | "created_at"> & { id?: string }
-): Promise<{ success: boolean; property: Property; error?: string }> {
-  let savedProperty: Property;
+): Promise<{ success: boolean; property?: Property; error?: string }> {
+  try {
+    const supabase = await createClient();
+    const { id, ...supabaseData } = propertyData;
 
-  // 1. Try Supabase first
-  if (isSupabaseConfigured()) {
-    try {
-      const supabase = await createClient();
-      const { id, ...supabaseData } = propertyData;
+    if (id) {
+      const { data, error } = await supabase
+        .from("properties")
+        .update(supabaseData)
+        .eq("id", id)
+        .select()
+        .single();
 
-      if (id && !id.startsWith("prop-")) {
-        const { data, error } = await supabase
-          .from("properties")
-          .update(supabaseData)
-          .eq("id", id)
-          .select()
-          .single();
-
-        if (!error && data) {
-          savedProperty = data as Property;
-          const currentList = await getLocalProperties();
-          const index = currentList.findIndex((p) => p.id === id);
-          if (index >= 0) currentList[index] = savedProperty;
-          else currentList.unshift(savedProperty);
-          await saveLocalProperties(currentList);
-          return { success: true, property: savedProperty };
-        }
-      } else {
-        const { data, error } = await supabase
-          .from("properties")
-          .insert(supabaseData)
-          .select()
-          .single();
-
-        if (!error && data) {
-          savedProperty = data as Property;
-          const currentList = await getLocalProperties();
-          currentList.unshift(savedProperty);
-          await saveLocalProperties(currentList);
-          return { success: true, property: savedProperty };
-        }
+      if (error) {
+        return { success: false, error: error.message };
       }
-    } catch (e) {
-      console.warn("Supabase operation failed, falling back to local storage:", e);
-    }
-  }
-
-  // 2. Local fallback
-  const currentList = await getLocalProperties();
-  if (propertyData.id) {
-    const index = currentList.findIndex((p) => p.id === propertyData.id);
-    savedProperty = {
-      ...propertyData,
-      id: propertyData.id,
-      created_at: index >= 0 ? currentList[index].created_at : new Date().toISOString(),
-    } as Property;
-    if (index >= 0) {
-      currentList[index] = savedProperty;
+      return { success: true, property: data as Property };
     } else {
-      currentList.unshift(savedProperty);
-    }
-  } else {
-    savedProperty = {
-      ...propertyData,
-      id: "prop-" + Date.now(),
-      created_at: new Date().toISOString(),
-    } as Property;
-    currentList.unshift(savedProperty);
-  }
+      const { data, error } = await supabase
+        .from("properties")
+        .insert(supabaseData)
+        .select()
+        .single();
 
-  await saveLocalProperties(currentList);
-  return { success: true, property: savedProperty };
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      return { success: true, property: data as Property };
+    }
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "فشلت العملية في قاعدة البيانات";
+    return { success: false, error: msg };
+  }
 }
 
 export async function updatePropertyStatus(
   id: string,
   newStatus: string
-): Promise<boolean> {
-  if (isSupabaseConfigured()) {
-    try {
-      const supabase = await createClient();
-      if (!id.startsWith("prop-")) {
-        await supabase.from("properties").update({ status: newStatus }).eq("id", id);
-      }
-    } catch {
-      // ignore
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("properties")
+      .update({ status: newStatus })
+      .eq("id", id);
+
+    if (error) {
+      return { success: false, error: error.message };
     }
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "فشل تحديث الحالة";
+    return { success: false, error: msg };
   }
-
-  const currentList = await getLocalProperties();
-  const index = currentList.findIndex((p) => p.id === id);
-  if (index >= 0) {
-    currentList[index].status = newStatus;
-    await saveLocalProperties(currentList);
-  }
-
-  return true;
 }
 
-export async function deleteProperty(id: string): Promise<boolean> {
-  if (isSupabaseConfigured()) {
-    try {
-      const supabase = await createClient();
-      if (!id.startsWith("prop-")) {
-        await supabase.from("properties").delete().eq("id", id);
+export async function deleteProperty(
+  id: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createClient();
+
+    // 1. Fetch property to obtain its images
+    const property = await getPropertyById(id);
+
+    // 2. Delete images from storage bucket if any exist
+    if (property?.images && Array.isArray(property.images) && property.images.length > 0) {
+      const pathsToDelete = property.images
+        .map(extractStoragePath)
+        .filter((p): p is string => typeof p === "string" && p.length > 0);
+
+      if (pathsToDelete.length > 0) {
+        try {
+          const { error: storageErr } = await supabase.storage
+            .from("property-images")
+            .remove(pathsToDelete);
+          if (storageErr) {
+            console.warn("Warning deleting property images from storage:", storageErr);
+          }
+        } catch (storageException) {
+          console.warn("Storage deletion exception:", storageException);
+        }
       }
-    } catch {
-      // ignore
     }
+
+    // 3. Delete property record from DB
+    const { error } = await supabase.from("properties").delete().eq("id", id);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "فشل حذف السكن";
+    return { success: false, error: msg };
   }
-
-  const currentList = await getLocalProperties();
-  const filtered = currentList.filter((p) => p.id !== id);
-  await saveLocalProperties(filtered);
-
-  return true;
 }

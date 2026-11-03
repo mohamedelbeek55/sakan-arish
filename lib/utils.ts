@@ -64,6 +64,16 @@ export function getStatusStyles(status: string): string {
   return styles[status] || "";
 }
 
+export function getWhatsAppNumber(): string {
+  const num = process.env.NEXT_PUBLIC_ADMIN_WHATSAPP_NUMBER?.trim();
+  if (!num) {
+    throw new Error(
+      "Missing NEXT_PUBLIC_ADMIN_WHATSAPP_NUMBER environment variable. Please configure it in your environment."
+    );
+  }
+  return num;
+}
+
 export function buildBookingWhatsAppUrl({
   phoneNumber,
   code,

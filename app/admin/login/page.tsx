@@ -52,7 +52,6 @@ export default function AdminLoginPage() {
             setError("تعذر تسجيل الدخول، يرجى التأكد من البيانات المدخلة");
           }
         } else if (authData?.user) {
-          document.cookie = "admin_session=true; path=/; max-age=86400";
           router.push("/admin/dashboard");
           router.refresh();
         }

@@ -35,7 +35,7 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAuth = !!user || request.cookies.get("admin_session")?.value === "true";
+  const isAuth = !!user;
 
   // Protect admin routes (except login)
   if (

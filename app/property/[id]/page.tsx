@@ -30,6 +30,7 @@ import {
   getRentalTypePriceLabel,
   buildBookingWhatsAppUrl,
   buildWhatsAppUrl,
+  getWhatsAppNumber,
 } from "@/lib/utils";
 import type { Metadata } from "next";
 import type { Property } from "@/components/property/PropertyCard";
@@ -74,8 +75,7 @@ export default async function PropertyDetailPage({
   if (!p) {
     notFound();
   }
-  const whatsappNumber =
-    process.env.NEXT_PUBLIC_ADMIN_WHATSAPP_NUMBER || "201271759984";
+  const whatsappNumber = getWhatsAppNumber();
 
   return (
     <>
