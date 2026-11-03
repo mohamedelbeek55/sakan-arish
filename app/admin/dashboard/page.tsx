@@ -81,40 +81,15 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-[#EBE6DC] pb-5">
+      {/* Page Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-[#EBE6DC] pb-4">
         <div>
-          <h1 className="text-2xl font-black text-stone-900">لوحة التحكم الإدارية</h1>
-          <p className="text-xs text-stone-500 mt-1">
-            إدارة إعلانات السكن، مراجعة طلبات أصحاب الشقق، ومتابعة إحصائيات الحجز
+          <h1 className="text-2xl font-black text-stone-900">لوحة تحكم السكنات</h1>
+          <p className="text-xs text-stone-500 mt-0.5">
+            متابعة حالة الوحدات، وتعديل بيانات السكن، ومراقبة نقرات حجز الواتساب
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Link href="/admin/dashboard/submissions">
-            <Button
-              variant="outline"
-              size="sm"
-              className="relative gap-1.5 border-sky-200 bg-sky-50/70 text-sky-800 hover:bg-sky-100 rounded-xl h-9 text-xs font-bold transition cursor-pointer"
-            >
-              <Inbox className="h-4 w-4 text-[#0369A1]" />
-              طلبات أصحاب الشقق
-              {pendingSubmissionsCount > 0 && (
-                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-600 px-1.5 text-[11px] font-bold text-white shadow-xs">
-                  {pendingSubmissionsCount}
-                </span>
-              )}
-            </Button>
-          </Link>
-          <Link href="/">
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-[#EBE6DC] bg-white hover:bg-[#FAF7F0] text-stone-700 rounded-xl h-9 text-xs font-semibold cursor-pointer"
-            >
-              <Home className="h-4 w-4 text-stone-500" />
-              عرض المنصة
-            </Button>
-          </Link>
+        <div className="flex items-center gap-2">
           <Link href="/admin/dashboard/new">
             <Button
               size="sm"
@@ -124,7 +99,6 @@ export default async function AdminDashboardPage() {
               إضافة سكن جديد
             </Button>
           </Link>
-          <LogoutButton className="rounded-xl h-9 text-xs" />
         </div>
       </div>
 
