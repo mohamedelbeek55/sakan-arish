@@ -12,7 +12,7 @@ interface LogoutButtonProps {
 }
 
 export default function LogoutButton({
-  className = "border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-medium",
+  className = "border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800 font-bold rounded-xl",
   variant = "outline",
 }: LogoutButtonProps) {
   const router = useRouter();

@@ -23,18 +23,19 @@ export default async function EditPropertyPage({
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
-      <div className="flex items-center gap-3">
+    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
+      <div className="flex items-center gap-3 border-b border-[#EBE6DC] pb-5">
         <Link
           href="/admin/dashboard"
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 transition"
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#EBE6DC] bg-white text-stone-600 hover:bg-[#FAF7F0] hover:text-stone-900 transition-colors shadow-2xs"
+          title="العودة للوحة التحكم"
         >
           <ArrowRight className="h-4 w-4" />
         </Link>
         <div>
-          <h1 className="text-xl font-bold text-slate-900">تعديل الإعلان</h1>
-          <p className="text-sm text-slate-500">
-            تعديل بيانات السكن: {found.code}
+          <h1 className="text-2xl font-black text-stone-900">تعديل بيانات السكن</h1>
+          <p className="text-xs text-stone-500 mt-0.5">
+            تعديل بيانات السكن: <span className="font-mono font-bold text-stone-800">{found.code}</span>
           </p>
         </div>
       </div>

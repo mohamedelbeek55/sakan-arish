@@ -50,7 +50,7 @@ export default function SubmissionActions({
 
   if (status === "approved") {
     return (
-      <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md">
+      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#166534] bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg">
         <Check className="h-3.5 w-3.5" />
         تم الاعتماد
       </span>
@@ -59,7 +59,7 @@ export default function SubmissionActions({
 
   if (status === "rejected") {
     return (
-      <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-md">
+      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-stone-500 bg-stone-100 border border-stone-200 px-2.5 py-1 rounded-lg">
         <X className="h-3.5 w-3.5" />
         مرفوض
       </span>
@@ -72,7 +72,7 @@ export default function SubmissionActions({
         size="sm"
         disabled={isPending}
         onClick={handleApprove}
-        className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs h-8 gap-1 rounded-lg cursor-pointer"
+        className="bg-[#166534] hover:bg-[#15803D] text-white font-bold text-xs h-8 gap-1.5 rounded-xl cursor-pointer shadow-2xs"
       >
         {isPending ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -88,7 +88,7 @@ export default function SubmissionActions({
         variant="outline"
         disabled={isPending}
         onClick={handleReject}
-        className="border-red-200 text-red-600 hover:bg-red-50 text-xs h-8 gap-1 rounded-lg cursor-pointer"
+        className="border-rose-200 text-rose-700 hover:bg-rose-50 text-xs h-8 gap-1 rounded-xl cursor-pointer"
       >
         <X className="h-3.5 w-3.5" />
         رفض

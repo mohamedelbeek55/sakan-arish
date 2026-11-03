@@ -4,25 +4,27 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-700 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer",
   {
     variants: {
       variant: {
         default:
-          "bg-teal-700 text-white hover:bg-teal-800 shadow-sm",
+          "bg-sky-800 text-white shadow-xs hover:bg-sky-900",
         destructive:
-          "bg-red-600 text-white hover:bg-red-700 shadow-sm",
+          "bg-red-600 text-white shadow-xs hover:bg-red-700",
         outline:
-          "border border-slate-200 bg-white hover:bg-slate-50 hover:text-slate-900",
+          "border border-stone-200 bg-white text-stone-800 hover:bg-stone-50 hover:text-stone-900",
         secondary:
-          "bg-slate-100 text-slate-900 hover:bg-slate-200",
-        ghost: "hover:bg-slate-100 hover:text-slate-900",
-        link: "text-teal-700 underline-offset-4 hover:underline",
+          "bg-stone-100 text-stone-900 hover:bg-stone-200",
+        ghost: "hover:bg-stone-100 hover:text-stone-900",
+        link: "text-sky-800 underline-offset-4 hover:underline",
+        whatsapp:
+          "bg-[#25D366] text-white shadow-xs hover:bg-[#20BD5A]",
       },
       size: {
         default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-md px-3",
-        lg: "h-11 rounded-lg px-8",
+        sm: "h-9 rounded-lg px-3",
+        lg: "h-11 rounded-xl px-8",
         icon: "h-10 w-10",
       },
     },

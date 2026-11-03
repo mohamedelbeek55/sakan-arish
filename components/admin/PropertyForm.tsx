@@ -40,7 +40,6 @@ import {
 } from "@/lib/utils";
 import type { Property } from "@/components/property/PropertyCard";
 import { savePropertyAction } from "@/app/actions/property";
-import { extractYouTubeId } from "@/components/property/YouTubeEmbed";
 
 const propertySchema = z
   .object({
@@ -205,7 +204,7 @@ export default function PropertyForm({ property }: PropertyFormProps) {
   const watchedFurnished = watch("furnished");
   const watchedUtilities = watch("utilities_included");
 
-  // Automatically derive property status
+  // Automatically derive property status based on available_beds, total_beds, and rental_type
   const derivedStatus = derivePropertyStatus(
     watchedAvailableBeds,
     watchedTotalBeds,
@@ -347,8 +346,8 @@ export default function PropertyForm({ property }: PropertyFormProps) {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {/* Server Error Alert */}
       {serverError && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 flex items-start gap-2.5 shadow-xs">
-          <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5 text-red-600" />
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs text-rose-700 flex items-start gap-2.5 shadow-xs">
+          <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5 text-rose-600" />
           <div className="space-y-1">
             <p className="font-bold">تعذر حفظ الإعلان:</p>
             <p className="whitespace-pre-line leading-relaxed">{serverError}</p>
@@ -357,39 +356,41 @@ export default function PropertyForm({ property }: PropertyFormProps) {
       )}
 
       {/* Basic Info */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
-        <h3 className="font-semibold text-slate-900">المعلومات الأساسية</h3>
+      <div className="rounded-2xl border border-[#EBE6DC] bg-white p-5 sm:p-6 space-y-4 shadow-2xs">
+        <h3 className="font-bold text-stone-900 text-base">المعلومات الأساسية</h3>
 
         <div className="grid gap-4 sm:grid-cols-2">
           {/* Code */}
           <div className="space-y-1.5">
-            <Label htmlFor="code">كود السكن</Label>
+            <Label htmlFor="code" className="text-xs font-semibold text-stone-700">كود السكن</Label>
             <Input
               id="code"
               placeholder="مثال: MS-01"
+              className="rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 focus:bg-white focus:border-[#0284C7] focus:ring-2 focus:ring-[#0284C7]/15 h-10"
               {...register("code")}
             />
             {errors.code && (
-              <p className="text-xs text-red-500">{errors.code.message}</p>
+              <p className="text-xs text-rose-600">{errors.code.message}</p>
             )}
           </div>
 
           {/* Title */}
           <div className="space-y-1.5">
-            <Label htmlFor="title">عنوان الإعلان</Label>
+            <Label htmlFor="title" className="text-xs font-semibold text-stone-700">عنوان الإعلان</Label>
             <Input
               id="title"
               placeholder="مثال: شقة 3 غرف بالمساعيد قريبة من جامعة سيناء"
+              className="rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 focus:bg-white focus:border-[#0284C7] focus:ring-2 focus:ring-[#0284C7]/15 h-10"
               {...register("title")}
             />
             {errors.title && (
-              <p className="text-xs text-red-500">{errors.title.message}</p>
+              <p className="text-xs text-rose-600">{errors.title.message}</p>
             )}
           </div>
 
           {/* Area */}
           <div className="space-y-1.5">
-            <Label>المنطقة</Label>
+            <Label className="text-xs font-semibold text-stone-700">المنطقة</Label>
             <Select
               value={watchedArea}
               onValueChange={(v) =>
@@ -398,7 +399,7 @@ export default function PropertyForm({ property }: PropertyFormProps) {
                 })
               }
             >
-              <SelectTrigger>
+              <SelectTrigger className="rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 h-10">
                 <SelectValue placeholder="اختر المنطقة" />
               </SelectTrigger>
               <SelectContent>
@@ -411,13 +412,13 @@ export default function PropertyForm({ property }: PropertyFormProps) {
               </SelectContent>
             </Select>
             {errors.area && (
-              <p className="text-xs text-red-500">{errors.area.message}</p>
+              <p className="text-xs text-rose-600">{errors.area.message}</p>
             )}
           </div>
 
           {/* Gender */}
           <div className="space-y-1.5">
-            <Label>نوع السكن (شباب / بنات)</Label>
+            <Label className="text-xs font-semibold text-stone-700">نوع السكن (شباب / بنات)</Label>
             <Select
               value={watchedGender}
               onValueChange={(v) =>
@@ -426,7 +427,7 @@ export default function PropertyForm({ property }: PropertyFormProps) {
                 })
               }
             >
-              <SelectTrigger>
+              <SelectTrigger className="rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 h-10">
                 <SelectValue placeholder="اختر الفئة" />
               </SelectTrigger>
               <SelectContent>
@@ -435,13 +436,13 @@ export default function PropertyForm({ property }: PropertyFormProps) {
               </SelectContent>
             </Select>
             {errors.gender && (
-              <p className="text-xs text-red-500">{errors.gender.message}</p>
+              <p className="text-xs text-rose-600">{errors.gender.message}</p>
             )}
           </div>
 
           {/* Rental Type */}
           <div className="space-y-1.5">
-            <Label>نوع الإيجار</Label>
+            <Label className="text-xs font-semibold text-stone-700">نوع الإيجار</Label>
             <Select
               value={watchedRentalType}
               onValueChange={(v) =>
@@ -452,7 +453,7 @@ export default function PropertyForm({ property }: PropertyFormProps) {
                 )
               }
             >
-              <SelectTrigger>
+              <SelectTrigger className="rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 h-10">
                 <SelectValue placeholder="اختر نوع الإيجار" />
               </SelectTrigger>
               <SelectContent>
@@ -462,7 +463,7 @@ export default function PropertyForm({ property }: PropertyFormProps) {
               </SelectContent>
             </Select>
             {errors.rental_type && (
-              <p className="text-xs text-red-500">
+              <p className="text-xs text-rose-600">
                 {errors.rental_type.message}
               </p>
             )}
@@ -470,34 +471,36 @@ export default function PropertyForm({ property }: PropertyFormProps) {
 
           {/* Price */}
           <div className="space-y-1.5">
-            <Label htmlFor="price">السعر (ج.م)</Label>
+            <Label htmlFor="price" className="text-xs font-semibold text-stone-700">السعر (ج.م / شهر)</Label>
             <Input
               id="price"
               type="number"
               placeholder="مثال: 1500"
+              className="rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 focus:bg-white focus:border-[#0284C7] focus:ring-2 focus:ring-[#0284C7]/15 h-10 font-bold"
               {...register("price", { valueAsNumber: true })}
             />
             {errors.price && (
-              <p className="text-xs text-red-500">{errors.price.message}</p>
+              <p className="text-xs text-rose-600">{errors.price.message}</p>
             )}
           </div>
         </div>
       </div>
 
       {/* Specifications & Extended Columns */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
-        <h3 className="font-semibold text-slate-900">مواصفات السكن والجامعة</h3>
+      <div className="rounded-2xl border border-[#EBE6DC] bg-white p-5 sm:p-6 space-y-4 shadow-2xs">
+        <h3 className="font-bold text-stone-900 text-base">مواصفات السكن والجامعة</h3>
 
         <div className="grid gap-4 sm:grid-cols-3">
           {/* Walking minutes to university */}
           <div className="space-y-1.5">
-            <Label htmlFor="walking_minutes_to_university">
-              وقت المشي للجامعة (بالدقائق)
+            <Label htmlFor="walking_minutes_to_university" className="text-xs font-semibold text-stone-700">
+              وقت المشي للجامعة (دقائق)
             </Label>
             <Input
               id="walking_minutes_to_university"
               type="number"
               placeholder="مثال: 7"
+              className="rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 h-10"
               {...register("walking_minutes_to_university", {
                 valueAsNumber: true,
               })}
@@ -506,51 +509,55 @@ export default function PropertyForm({ property }: PropertyFormProps) {
 
           {/* Floor */}
           <div className="space-y-1.5">
-            <Label htmlFor="floor">الدور / الطابق</Label>
+            <Label htmlFor="floor" className="text-xs font-semibold text-stone-700">الدور / الطابق</Label>
             <Input
               id="floor"
               type="number"
               placeholder="0 للأرضي، 1، 2، 3..."
+              className="rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 h-10"
               {...register("floor", { valueAsNumber: true })}
             />
           </div>
 
           {/* Students per room */}
           <div className="space-y-1.5">
-            <Label htmlFor="students_per_room">سعة الغرفة (كم طالب بالمتوسط)</Label>
+            <Label htmlFor="students_per_room" className="text-xs font-semibold text-stone-700">سعة الغرفة (طلاب)</Label>
             <Input
               id="students_per_room"
               type="number"
               placeholder="مثال: 2"
+              className="rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 h-10"
               {...register("students_per_room", { valueAsNumber: true })}
             />
           </div>
 
           {/* Total Beds */}
           <div className="space-y-1.5">
-            <Label htmlFor="total_beds">إجمالي الأسرّة في الشقة</Label>
+            <Label htmlFor="total_beds" className="text-xs font-semibold text-stone-700">إجمالي الأسرّة في السكن</Label>
             <Input
               id="total_beds"
               type="number"
               min={1}
+              className="rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 h-10"
               {...register("total_beds", { valueAsNumber: true })}
             />
             {errors.total_beds && (
-              <p className="text-xs text-red-500">{errors.total_beds.message}</p>
+              <p className="text-xs text-rose-600">{errors.total_beds.message}</p>
             )}
           </div>
 
           {/* Available Beds */}
           <div className="space-y-1.5">
-            <Label htmlFor="available_beds">الأسرّة المتاحة حالياً</Label>
+            <Label htmlFor="available_beds" className="text-xs font-semibold text-stone-700">الأسرّة المتاحة حالياً</Label>
             <Input
               id="available_beds"
               type="number"
               min={0}
+              className="rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 h-10 font-bold"
               {...register("available_beds", { valueAsNumber: true })}
             />
             {errors.available_beds && (
-              <p className="text-xs text-red-500">
+              <p className="text-xs text-rose-600">
                 {errors.available_beds.message}
               </p>
             )}
@@ -558,53 +565,57 @@ export default function PropertyForm({ property }: PropertyFormProps) {
 
           {/* Rooms Count */}
           <div className="space-y-1.5">
-            <Label htmlFor="rooms_count">عدد الغرف في السكن</Label>
+            <Label htmlFor="rooms_count" className="text-xs font-semibold text-stone-700">عدد الغرف في السكن</Label>
             <Input
               id="rooms_count"
               type="number"
               min={1}
+              className="rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 h-10"
               {...register("rooms_count", { valueAsNumber: true })}
             />
           </div>
 
           {/* Deposit */}
           <div className="space-y-1.5">
-            <Label htmlFor="deposit">مبلغ التأمين (ج.م) - اختياري</Label>
+            <Label htmlFor="deposit" className="text-xs font-semibold text-stone-700">مبلغ التأمين (ج.م) - اختياري</Label>
             <Input
               id="deposit"
               type="number"
-              placeholder="0 أو فارغ إذا بدون تأمين"
+              placeholder="0 أو اتركه فارغاً"
+              className="rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 h-10"
               {...register("deposit", { valueAsNumber: true })}
             />
           </div>
 
           {/* Contract months */}
           <div className="space-y-1.5">
-            <Label htmlFor="contract_months">مدة العقد (شهور)</Label>
+            <Label htmlFor="contract_months" className="text-xs font-semibold text-stone-700">مدة العقد (شهور)</Label>
             <Input
               id="contract_months"
               type="number"
               placeholder="مثال: 10"
+              className="rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 h-10"
               {...register("contract_months", { valueAsNumber: true })}
             />
           </div>
 
           {/* Maps URL */}
           <div className="space-y-1.5">
-            <Label htmlFor="maps_url">رابط خرائط Google (Maps URL)</Label>
+            <Label htmlFor="maps_url" className="text-xs font-semibold text-stone-700">رابط خرائط Google Maps</Label>
             <Input
               id="maps_url"
               placeholder="https://maps.google.com/..."
               dir="ltr"
+              className="rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 h-10 text-xs"
               {...register("maps_url")}
             />
           </div>
         </div>
 
         {/* Tri-state: Furnished & Utilities Included */}
-        <div className="pt-2 grid gap-4 sm:grid-cols-2 border-t border-slate-100">
+        <div className="pt-3 grid gap-4 sm:grid-cols-2 border-t border-[#EBE6DC]">
           <div className="space-y-1.5">
-            <Label>حالة الفرش والأثاث</Label>
+            <Label className="text-xs font-bold text-stone-800">حالة الفرش والأثاث</Label>
             <Select
               value={
                 watchedFurnished === true
@@ -621,7 +632,7 @@ export default function PropertyForm({ property }: PropertyFormProps) {
                 );
               }}
             >
-              <SelectTrigger>
+              <SelectTrigger className="rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 h-10">
                 <SelectValue placeholder="اختر حالة الفرش" />
               </SelectTrigger>
               <SelectContent>
@@ -633,7 +644,7 @@ export default function PropertyForm({ property }: PropertyFormProps) {
           </div>
 
           <div className="space-y-1.5">
-            <Label>الفواتير والخدمات</Label>
+            <Label className="text-xs font-bold text-stone-800">الفواتير والخدمات</Label>
             <Select
               value={
                 watchedUtilities === true
@@ -650,7 +661,7 @@ export default function PropertyForm({ property }: PropertyFormProps) {
                 );
               }}
             >
-              <SelectTrigger>
+              <SelectTrigger className="rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 h-10">
                 <SelectValue placeholder="اختر حالة الفواتير" />
               </SelectTrigger>
               <SelectContent>
@@ -663,11 +674,11 @@ export default function PropertyForm({ property }: PropertyFormProps) {
         </div>
 
         {/* Derived status info box */}
-        <div className="rounded-xl border border-teal-100 bg-teal-50/60 p-3.5 flex items-center justify-between text-xs">
+        <div className="rounded-xl border border-sky-200 bg-sky-50/70 p-3.5 flex items-center justify-between text-xs">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-teal-600" />
-            <span className="font-semibold text-teal-900">
-              حالة السكن (محسوبة تلقائياً من الأسرّة المتاحة):
+            <Sparkles className="h-4 w-4 text-[#0369A1]" />
+            <span className="font-bold text-[#0369A1]">
+              حالة السكن (محسوبة تلقائياً من الأسرّة ونوع التأجير):
             </span>
           </div>
           <span
@@ -682,37 +693,39 @@ export default function PropertyForm({ property }: PropertyFormProps) {
       </div>
 
       {/* Admin-only info */}
-      <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-5 space-y-3">
+      <div className="rounded-2xl border border-amber-200/90 bg-amber-50/40 p-5 sm:p-6 space-y-3.5 shadow-2xs">
         <div className="flex items-center gap-2">
-          <Shield className="h-4 w-4 text-amber-700" />
-          <h3 className="font-bold text-amber-900 text-sm">
+          <Shield className="h-4 w-4 text-[#B45309]" />
+          <h3 className="font-black text-amber-950 text-sm">
             بيانات سرية خاصة بالمشرفين (Admin-Only)
           </h3>
         </div>
-        <p className="text-xs text-amber-700 leading-relaxed">
-          هذه البيانات تظهر لك فقط في لوحة التحكم ولن تظهر للطلاب أو الزوار نهائياً في أي مكان.
+        <p className="text-xs text-amber-800 leading-relaxed">
+          هذه البيانات تظهر لك فقط في لوحة التحكم ولن تظهر للطلاب أو الزوار نهائياً في أي مكان عبر واجهة المنصة أو الـ API.
         </p>
         <div className="max-w-md space-y-1.5">
-          <Label htmlFor="owner_phone">رقم هاتف / واتساب المالك الحقيقي</Label>
+          <Label htmlFor="owner_phone" className="text-xs font-bold text-amber-950">
+            رقم هاتف / واتساب المالك الحقيقي
+          </Label>
           <Input
             id="owner_phone"
             placeholder="01XXXXXXXXX"
             dir="ltr"
-            className="bg-white text-right"
+            className="rounded-xl border-amber-200 bg-white text-right h-10 font-mono text-xs"
             {...register("owner_phone")}
           />
         </div>
 
         {/* Verification Checkbox - Explicit admin-only action */}
         <div className="pt-3 border-t border-amber-200/80">
-          <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-amber-950">
+          <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-amber-950">
             <Checkbox
               checked={isVerified}
               onCheckedChange={(checked) => setIsVerified(!!checked)}
             />
             <span className="flex items-center gap-1.5">
-              <ShieldCheck className="h-4 w-4 text-emerald-600" />
-              تمت المعاينة (توثيق السكن والتأكد من بياناته على أرض الواقع)
+              <ShieldCheck className="h-4 w-4 text-[#166534]" />
+              تمت المعاينة الميدانية (توثيق السكن واعتماده رسمياً على أرض الواقع)
             </span>
           </label>
           {isVerified && property?.last_verified_at && (
@@ -725,37 +738,44 @@ export default function PropertyForm({ property }: PropertyFormProps) {
       </div>
 
       {/* Location Desc & Video */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
-        <h3 className="font-semibold text-slate-900">الموقع والفيديو والوصف</h3>
+      <div className="rounded-2xl border border-[#EBE6DC] bg-white p-5 sm:p-6 space-y-4 shadow-2xs">
+        <h3 className="font-bold text-stone-900 text-base">الموقع والفيديو والوصف</h3>
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="location_desc">وصف الموقع التقريبي والعلامة المميزة</Label>
+            <Label htmlFor="location_desc" className="text-xs font-semibold text-stone-700">
+              وصف الموقع التقريبي والعلامة المميزة
+            </Label>
             <Input
               id="location_desc"
               placeholder="مثال: المساعيد - 4 دقائق من بوابة الجامعة، أمام سوبرماركت الفيروز"
+              className="rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 h-10"
               {...register("location_desc")}
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="youtube_video_url">
-              رابط جولة الفيديو من يوتيوب (يوتيوب أو يوتيوب شورتس - اختياري)
+            <Label htmlFor="youtube_video_url" className="text-xs font-semibold text-stone-700">
+              رابط جولة الفيديو من يوتيوب (يوتيوب أو شورتس - اختياري)
             </Label>
             <Input
               id="youtube_video_url"
               placeholder="https://www.youtube.com/watch?v=... أو https://youtube.com/shorts/..."
               dir="ltr"
+              className="rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 h-10 text-xs"
               {...register("youtube_video_url")}
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="description">وصف تفصيلي للسكن (اختياري)</Label>
+            <Label htmlFor="description" className="text-xs font-semibold text-stone-700">
+              وصف تفصيلي للسكن (اختياري)
+            </Label>
             <Textarea
               id="description"
               rows={4}
               placeholder="اكتب تفاصيل إضافية عن السكن، الهدوء، العمارة، القرب من الخدمات..."
+              className="rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 p-3"
               {...register("description")}
             />
           </div>
@@ -763,13 +783,13 @@ export default function PropertyForm({ property }: PropertyFormProps) {
       </div>
 
       {/* Amenities */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
-        <h3 className="font-semibold text-slate-900">المرافق والخدمات</h3>
+      <div className="rounded-2xl border border-[#EBE6DC] bg-white p-5 sm:p-6 space-y-4 shadow-2xs">
+        <h3 className="font-bold text-stone-900 text-base">المرافق والخدمات</h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {AMENITY_OPTIONS.map((item) => (
             <label
               key={item.value}
-              className="flex items-center gap-2 p-2.5 rounded-lg border border-slate-100 bg-slate-50/50 hover:bg-slate-50 cursor-pointer text-xs sm:text-sm text-slate-700 transition"
+              className="flex items-center gap-2 p-2.5 rounded-xl border border-[#EBE6DC] bg-[#FAF7F0]/50 hover:bg-[#FAF7F0] cursor-pointer text-xs sm:text-sm text-stone-700 font-medium transition"
             >
               <Checkbox
                 checked={selectedAmenities.includes(item.value)}
@@ -782,17 +802,17 @@ export default function PropertyForm({ property }: PropertyFormProps) {
       </div>
 
       {/* Images Upload */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
+      <div className="rounded-2xl border border-[#EBE6DC] bg-white p-5 sm:p-6 space-y-4 shadow-2xs">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-slate-900">صور السكن</h3>
-          <span className="text-xs text-slate-500 font-medium">
+          <h3 className="font-bold text-stone-900 text-base">صور السكن</h3>
+          <span className="text-xs text-stone-500 font-semibold">
             {images.length} من 10 صور كحد أقصى
           </span>
         </div>
 
         {uploadError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700 flex items-center gap-2">
-            <AlertCircle className="h-4 w-4 flex-shrink-0 text-red-600" />
+          <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700 flex items-center gap-2 font-medium">
+            <AlertCircle className="h-4 w-4 flex-shrink-0 text-rose-600" />
             <span>{uploadError}</span>
           </div>
         )}
@@ -801,7 +821,7 @@ export default function PropertyForm({ property }: PropertyFormProps) {
           {images.map((img, index) => (
             <div
               key={index}
-              className="relative aspect-[4/3] rounded-lg overflow-hidden border border-slate-200 bg-slate-100 group"
+              className="relative aspect-[4/3] rounded-xl overflow-hidden border border-[#EBE6DC] bg-[#FAF7F0] group"
             >
               <Image
                 src={img}
@@ -813,7 +833,7 @@ export default function PropertyForm({ property }: PropertyFormProps) {
               <button
                 type="button"
                 onClick={() => removeImage(index)}
-                className="absolute top-1.5 left-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-white shadow-sm opacity-90 hover:opacity-100 transition cursor-pointer"
+                className="absolute top-1.5 left-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-rose-600 text-white shadow-xs opacity-90 hover:opacity-100 transition cursor-pointer"
                 aria-label="حذف الصورة"
               >
                 <X className="h-3.5 w-3.5" />
@@ -822,17 +842,17 @@ export default function PropertyForm({ property }: PropertyFormProps) {
           ))}
 
           {images.length < 10 && (
-            <label className="flex flex-col items-center justify-center aspect-[4/3] rounded-lg border-2 border-dashed border-slate-200 hover:border-teal-500 hover:bg-teal-50/20 transition cursor-pointer text-slate-400 hover:text-teal-700">
+            <label className="flex flex-col items-center justify-center aspect-[4/3] rounded-xl border-2 border-dashed border-[#EBE6DC] hover:border-[#0284C7] hover:bg-sky-50/20 transition cursor-pointer text-stone-400 hover:text-[#0369A1]">
               {uploading ? (
-                <div className="flex flex-col items-center gap-1.5 text-xs text-teal-700">
+                <div className="flex flex-col items-center gap-1.5 text-xs text-[#0369A1] font-bold">
                   <Loader2 className="h-6 w-6 animate-spin" />
                   <span>جاري الضغط والرفع...</span>
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-1.5 text-xs">
-                  <ImagePlus className="h-6 w-6" />
-                  <span className="font-semibold">إضافة صور</span>
-                  <span className="text-[10px] text-slate-400">
+                  <ImagePlus className="h-6 w-6 text-stone-400" />
+                  <span className="font-bold text-stone-700">إضافة صور</span>
+                  <span className="text-[10px] text-stone-400">
                     JPG أو PNG أو WebP
                   </span>
                 </div>
@@ -854,7 +874,7 @@ export default function PropertyForm({ property }: PropertyFormProps) {
       <Button
         type="submit"
         disabled={isPending || uploading}
-        className="w-full h-11 bg-teal-700 hover:bg-teal-800 text-white font-bold text-base rounded-xl transition shadow-xs cursor-pointer"
+        className="w-full h-12 bg-[#0369A1] hover:bg-[#0284C7] text-white font-bold text-base rounded-xl transition shadow-xs hover:shadow-md cursor-pointer"
       >
         {isPending ? (
           <>

@@ -41,31 +41,37 @@ export default function DeleteButton({ propertyId }: DeleteButtonProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+          className="h-8 w-8 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg cursor-pointer"
+          title="حذف السكن"
         >
           <Trash2 className="h-3.5 w-3.5" />
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="rounded-2xl border border-[#EBE6DC] bg-white sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>حذف الإعلان</DialogTitle>
-          <DialogDescription>
-            هل أنت متأكد من حذف هذا الإعلان؟ لا يمكن التراجع عن هذا الإجراء.
+          <DialogTitle className="text-lg font-black text-stone-900">حذف الإعلان نهائياً</DialogTitle>
+          <DialogDescription className="text-xs text-stone-500 leading-relaxed">
+            هل أنت متأكد من رغبتك في حذف هذا الإعلان؟ سيتم حذف جميع الصور والتفاصيل المرتبطة به فوراً ولا يمكن التراجع عن هذا الإجراء.
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+        <DialogFooter className="gap-2 sm:gap-0 pt-2">
+          <Button
+            variant="outline"
+            onClick={() => setOpen(false)}
+            className="rounded-xl border-[#EBE6DC] text-stone-600 hover:bg-[#FAF7F0] text-xs font-bold"
+          >
             إلغاء
           </Button>
           <Button
             variant="destructive"
             onClick={handleDelete}
             disabled={isPending}
+            className="rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs cursor-pointer"
           >
             {isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin ml-1.5" />
             ) : (
-              "حذف"
+              "تأكيد الحذف"
             )}
           </Button>
         </DialogFooter>
