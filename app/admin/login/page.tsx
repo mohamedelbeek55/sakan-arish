@@ -5,11 +5,10 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, LogIn, ShieldCheck, Home } from "lucide-react";
+import { Loader2, LogIn, ShieldCheck, Mail, Lock, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 
@@ -63,97 +62,105 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="flex min-h-[82vh] items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md space-y-4">
-        {/* Return to website */}
-        <div className="text-center">
+    <main className="flex-1 flex items-center justify-center p-4 sm:p-8 py-14">
+      <div className="w-full max-w-md bg-white rounded-3xl border border-slate-200 shadow-lg p-6 sm:p-8 text-right space-y-6">
+        {/* Lock Badge */}
+        <div className="w-16 h-16 rounded-2xl bg-[#0D3B4C]/10 text-[#0D3B4C] flex items-center justify-center mx-auto sm:mx-0">
+          <ShieldCheck className="h-9 w-9 text-[#0D3B4C]" />
+        </div>
+
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0F766E]/10 text-[#0F766E] text-xs font-bold">
+            <span className="w-2 h-2 rounded-full bg-[#0F766E]"></span>
+            جلسة دخول مشفرة ومحمية بالكامل
+          </div>
+
+          <h1 className="text-2xl font-black text-[#0D3B4C]">
+            تسجيل دخول المشرف العام
+          </h1>
+
+          <p className="text-xs text-slate-500 leading-relaxed">
+            سجّل الدخول بحسابك الإداري للوصول إلى لوحة التحكم الشاملة لإدارة وتعديل السكنات ومراجعة الطلبات.
+          </p>
+        </div>
+
+        {/* Auth Form */}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {error && (
+            <div className="rounded-xl bg-rose-50 border border-rose-200 p-3.5 text-xs font-semibold text-rose-700 leading-relaxed text-right animate-in fade-in">
+              {error}
+            </div>
+          )}
+
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className="text-xs font-bold text-slate-700">
+              البريد الإلكتروني للإدارة
+            </Label>
+            <div className="relative flex items-center">
+              <Mail className="absolute right-3.5 text-slate-400 h-4 w-4 pointer-events-none" />
+              <Input
+                id="email"
+                type="email"
+                dir="ltr"
+                placeholder="admin@domain.com"
+                className="pr-11 pl-4 h-11 rounded-xl border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:border-[#0D3B4C] text-left font-mono text-sm"
+                {...register("email")}
+              />
+            </div>
+            {errors.email && (
+              <p className="text-xs text-rose-600 font-medium">{errors.email.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="password" className="text-xs font-bold text-slate-700">
+              كلمة مرور المشرف
+            </Label>
+            <div className="relative flex items-center">
+              <Lock className="absolute right-3.5 text-slate-400 h-4 w-4 pointer-events-none" />
+              <Input
+                id="password"
+                type="password"
+                dir="ltr"
+                placeholder="••••••••••••"
+                className="pr-11 pl-4 h-11 rounded-xl border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:border-[#0D3B4C] text-left text-sm"
+                {...register("password")}
+              />
+            </div>
+            {errors.password && (
+              <p className="text-xs text-rose-600 font-medium">{errors.password.message}</p>
+            )}
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full h-11 bg-[#0D3B4C] hover:bg-[#0D3B4C]/90 text-white font-bold text-sm rounded-xl transition-all shadow-md flex items-center justify-center gap-2 mt-4 cursor-pointer"
+            disabled={isPending}
+          >
+            {isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                جاري التحقق من بيانات الدخول...
+              </>
+            ) : (
+              <>
+                <LogIn className="h-4 w-4 ml-1.5" />
+                دخول لوحة التحكم والتحكم الكامل
+              </>
+            )}
+          </Button>
+        </form>
+
+        <div className="pt-2 text-center">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-500 hover:text-[#0369A1] transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[#0D3B4C] transition-colors"
           >
             <Home className="h-3.5 w-3.5" />
             <span>العودة للمنصة الرئيسية</span>
           </Link>
         </div>
-
-        <Card className="rounded-2xl border border-[#EBE6DC] bg-white shadow-sm overflow-hidden">
-          <CardHeader className="text-center pb-4 pt-7 px-6 sm:px-8 space-y-2">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-50 text-[#0369A1] border border-sky-100 shadow-2xs">
-              <ShieldCheck className="h-7 w-7 text-[#0369A1]" />
-            </div>
-            <CardTitle className="text-2xl font-black text-stone-900">
-              تسجيل دخول المشرف
-            </CardTitle>
-            <CardDescription className="text-xs text-stone-500 leading-relaxed max-w-xs mx-auto">
-              أهلاً بيك، ادخل بيانات حسابك للوصول للوحة تحكم سكن طلاب العريش
-            </CardDescription>
-          </CardHeader>
-
-          <CardContent className="px-6 pb-8 pt-2 sm:px-8">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              {error && (
-                <div className="rounded-xl bg-rose-50 border border-rose-200 p-3.5 text-xs font-semibold text-rose-700 leading-relaxed text-right animate-in fade-in">
-                  {error}
-                </div>
-              )}
-
-              <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-xs font-bold text-stone-700">
-                  البريد الإلكتروني
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  dir="ltr"
-                  placeholder="admin@example.com"
-                  className="h-11 rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 placeholder:text-stone-400 focus:bg-white focus:border-[#0284C7] focus:ring-2 focus:ring-[#0284C7]/15 transition"
-                  {...register("email")}
-                />
-                {errors.email && (
-                  <p className="text-xs text-rose-600 font-medium">{errors.email.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="password" className="text-xs font-bold text-stone-700">
-                  كلمة المرور
-                </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  dir="ltr"
-                  placeholder="••••••••"
-                  className="h-11 rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 placeholder:text-stone-400 focus:bg-white focus:border-[#0284C7] focus:ring-2 focus:ring-[#0284C7]/15 transition"
-                  {...register("password")}
-                />
-                {errors.password && (
-                  <p className="text-xs text-rose-600 font-medium">
-                    {errors.password.message}
-                  </p>
-                )}
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full h-11 bg-[#0369A1] hover:bg-[#0284C7] text-white font-bold text-sm rounded-xl transition-all shadow-xs hover:shadow-md cursor-pointer mt-2"
-                disabled={isPending}
-              >
-                {isPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin ml-2" />
-                    جاري التحقق...
-                  </>
-                ) : (
-                  <>
-                    <LogIn className="h-4 w-4 ml-2" />
-                    دخول للوحة التحكم
-                  </>
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
       </div>
-    </div>
+    </main>
   );
 }

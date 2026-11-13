@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { recordWhatsAppClickAction } from "@/app/actions/property";
 import { buildBookingWhatsAppUrl } from "@/lib/utils";
 
@@ -29,7 +28,7 @@ export default function WhatsAppBookingButton({
   className = "",
   children,
 }: WhatsAppBookingButtonProps) {
-  const [href, setHref] = useState(() => {
+  const getUrl = (urlToUse?: string) => {
     if (initialWhatsappUrl) return initialWhatsappUrl;
     if (phoneNumber && code && title && price) {
       return buildBookingWhatsAppUrl({
@@ -38,47 +37,45 @@ export default function WhatsAppBookingButton({
         title,
         location,
         price,
-        propertyUrl,
+        propertyUrl: urlToUse || propertyUrl,
       });
     }
     return "";
-  });
+  };
 
-  useEffect(() => {
-    const currentUrl =
-      propertyUrl || (typeof window !== "undefined" ? window.location.href : "");
-    if (phoneNumber && code && title && price) {
-      setHref(
-        buildBookingWhatsAppUrl({
-          phoneNumber,
-          code,
-          title,
-          location,
-          price,
-          propertyUrl: currentUrl,
-        })
-      );
-    }
-  }, [phoneNumber, code, title, location, price, propertyUrl]);
+  const initialHref = getUrl();
 
-  const handleClick = () => {
-    // Fire click tracking without blocking navigation
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     try {
       recordWhatsAppClickAction(propertyId);
     } catch {
       // Ignore background analytics error
     }
+    if (typeof window !== "undefined") {
+      const liveHref = getUrl(window.location.href);
+      if (liveHref) {
+        e.currentTarget.href = liveHref;
+      }
+    }
   };
+
+  if (!initialHref) {
+    return (
+      <button disabled className={`opacity-50 cursor-not-allowed ${className}`}>
+        {children || "حجز عبر واتساب"}
+      </button>
+    );
+  }
 
   return (
     <a
-      href={href || initialWhatsappUrl}
+      href={initialHref}
       target="_blank"
       rel="noopener noreferrer"
       onClick={handleClick}
       className={className}
     >
-      {children || "احجز وتواصل عبر واتساب"}
+      {children || "حجز عبر واتساب"}
     </a>
   );
 }

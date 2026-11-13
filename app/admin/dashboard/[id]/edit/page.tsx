@@ -1,9 +1,8 @@
 import { requireAdmin } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronLeft, ExternalLink } from "lucide-react";
 import PropertyForm from "@/components/admin/PropertyForm";
-import type { Property } from "@/components/property/PropertyCard";
 import { getPropertyById } from "@/lib/properties-store";
 
 interface EditPropertyPageProps {
@@ -23,20 +22,45 @@ export default async function EditPropertyPage({
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
-      <div className="flex items-center gap-3 border-b border-[#EBE6DC] pb-5">
-        <Link
-          href="/admin/dashboard"
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#EBE6DC] bg-white text-stone-600 hover:bg-[#FAF7F0] hover:text-stone-900 transition-colors shadow-2xs"
-          title="العودة للوحة التحكم"
-        >
-          <ArrowRight className="h-4 w-4" />
-        </Link>
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
+      {/* Top Action Breadcrumb & Title (Stitch Screen 8) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-light-outline/60 pb-5">
         <div>
-          <h1 className="text-2xl font-black text-stone-900">تعديل بيانات السكن</h1>
-          <p className="text-xs text-stone-500 mt-0.5">
-            تعديل بيانات السكن: <span className="font-mono font-bold text-stone-800">{found.code}</span>
+          <div className="flex items-center gap-1.5 mb-1.5 text-xs text-light-on-surface/60 font-medium">
+            <Link href="/admin/dashboard" className="hover:text-light-primary">
+              لوحة التحكم
+            </Link>
+            <ChevronLeft className="h-3.5 w-3.5" />
+            <span>تعديل عقار</span>
+            <ChevronLeft className="h-3.5 w-3.5" />
+            <span className="font-mono text-light-primary font-bold">
+              #{found.code}
+            </span>
+          </div>
+          <h1 className="font-headline text-2xl sm:text-3xl font-black text-light-primary">
+            تعديل وإدارة عقار: {found.title}
+          </h1>
+          <p className="text-xs text-light-on-surface/70 mt-1">
+            أنت في وضع التعديل الإداري المباشر بحساب المشرف العام
           </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/property/${found.id}`}
+            target="_blank"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-light-outline text-light-secondary hover:bg-light-surface-subtle text-xs font-bold transition-colors"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            <span>معاينة كطالب</span>
+          </Link>
+          <Link
+            href="/admin/dashboard"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-light-outline text-light-on-surface/70 hover:bg-light-surface-subtle text-xs font-bold transition-colors"
+          >
+            <ArrowRight className="h-4 w-4" />
+            <span>العودة للوحة</span>
+          </Link>
         </div>
       </div>
 

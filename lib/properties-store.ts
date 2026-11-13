@@ -61,7 +61,8 @@ export async function getAllProperties(options?: {
 
   // Public query: strictly never select/return owner_phone
   return list.map((item) => {
-    const { owner_phone: _hidden, ...safeItem } = item;
+    const safeItem = { ...item };
+    delete safeItem.owner_phone;
     return safeItem as Property;
   });
 }
@@ -108,7 +109,8 @@ export async function getPropertyById(
   }
 
   // Public query: strictly never expose owner_phone
-  const { owner_phone: _hidden, ...safeItem } = item;
+  const safeItem = { ...item };
+  delete safeItem.owner_phone;
   return safeItem as Property;
 }
 
@@ -117,7 +119,8 @@ export async function upsertProperty(
 ): Promise<{ success: boolean; property?: Property; error?: string }> {
   try {
     const supabase = await createClient();
-    const { id, owner_phone, whatsapp_clicks, ...rawSupabaseData } = propertyData;
+    const { id, owner_phone, whatsapp_clicks: _clicks, ...rawSupabaseData } = propertyData;
+    void _clicks;
 
     // Derive status automatically from available_beds, total_beds, and rental_type
     const autoStatus = derivePropertyStatus(

@@ -1,12 +1,41 @@
 @import "tailwindcss";
 
+@theme {
+  --color-accent: #D97706;
+  --color-whatsapp: #16A34A;
+  --color-success: #15803D;
+  --color-warning: #B45309;
+  --color-error: #B91C1C;
+  --color-light-primary: #0D3B4C;
+  --color-light-on-primary: #FFFFFF;
+  --color-light-secondary: #0F766E;
+  --color-light-on-secondary: #FFFFFF;
+  --color-light-surface: #F8FAFC;
+  --color-light-on-surface: #0F172A;
+  --color-light-surface-card: #FFFFFF;
+  --color-light-surface-subtle: #F1F5F9;
+  --color-light-outline: #CBD5E1;
+  --color-dark-primary: #38BDF8;
+  --color-dark-on-primary: #082F49;
+  --color-dark-secondary: #2DD4BF;
+  --color-dark-on-secondary: #134E4A;
+  --color-dark-surface: #0F172A;
+  --color-dark-on-surface: #F8FAFC;
+  --color-dark-surface-card: #1E293B;
+  --color-dark-surface-subtle: #334155;
+  --color-dark-outline: #475569;
+}
+
 :root {
-  --background: #fbf9f5;
-  --foreground: #1c1917;
+  --background: #F8FAFC;
+  --foreground: #0F172A;
+  --primary: #0D3B4C;
+  --secondary: #0F766E;
+  --outline: #CBD5E1;
 }
 
 * {
-  border-color: #ebe6dc;
+  border-color: #E2E8F0;
 }
 
 html,
@@ -30,16 +59,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f5f2eb;
+  background: #F1F5F9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d6cfc2;
+  background: #CBD5E1;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #b8ad9c;
+  background: #94A3B8;
 }
 
 /* Hide scrollbar utility for clean touch-scrolling chips */
