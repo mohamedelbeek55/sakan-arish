@@ -11,6 +11,7 @@ import {
   Footprints,
   Plus,
 } from "lucide-react";
+import type { Property } from "@/components/property/PropertyCard";
 import { getAllProperties } from "@/lib/properties-store";
 import { normalizeArabicText } from "@/lib/utils";
 
@@ -40,7 +41,12 @@ async function PropertyGrid({
   sort?: string;
   q?: string;
 }) {
-  const allProperties = await getAllProperties();
+  let allProperties: Property[] = [];
+  try {
+    allProperties = await getAllProperties();
+  } catch (err) {
+    console.error("Error loading properties:", err);
+  }
   const normalizedQuery = q ? normalizeArabicText(q) : "";
 
   // 1. Filter
