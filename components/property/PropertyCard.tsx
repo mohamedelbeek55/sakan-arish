@@ -64,6 +64,10 @@ export default function PropertyCard({ property }: PropertyCardProps) {
       ? "جامعة سيناء — المساعيد"
       : "جامعة العريش — الضاحية";
 
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://sakan-arish.vercel.app";
+  const propertyUrl = `${siteUrl}/property/${property.id}`;
+
   return (
     <article
       data-campus={property.area === "al_masaeed" ? "sinai" : "dahiya"}
@@ -185,6 +189,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
               title={property.title}
               location={property.location_desc}
               price={property.price}
+              propertyUrl={propertyUrl}
               className="py-2 px-4 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white flex items-center justify-center gap-1.5 text-xs font-bold transition-colors shadow-xs cursor-pointer"
             >
               <MessageSquare className="h-3.5 w-3.5" />

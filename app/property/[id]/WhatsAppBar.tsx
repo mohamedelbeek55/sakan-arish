@@ -41,13 +41,16 @@ export default function WhatsAppBar({
       }
     }
     if (typeof window !== "undefined") {
+      const liveUrl = propertyId
+        ? `${window.location.origin}/property/${propertyId}`
+        : window.location.href;
       e.currentTarget.href = buildWhatsAppUrl(
         phoneNumber,
         code,
         location,
         price,
         title,
-        window.location.href
+        liveUrl
       );
     }
   };

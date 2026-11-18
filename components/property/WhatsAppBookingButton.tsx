@@ -28,8 +28,18 @@ export default function WhatsAppBookingButton({
   className = "",
   children,
 }: WhatsAppBookingButtonProps) {
+  const getCanonicalPropertyUrl = (overrideUrl?: string) => {
+    if (overrideUrl) return overrideUrl;
+    if (propertyUrl) return propertyUrl;
+    if (typeof window !== "undefined") {
+      return `${window.location.origin}/property/${propertyId}`;
+    }
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://sakan-arish.vercel.app";
+    return `${siteUrl}/property/${propertyId}`;
+  };
+
   const getUrl = (urlToUse?: string) => {
-    if (initialWhatsappUrl) return initialWhatsappUrl;
     if (phoneNumber && code && title && price) {
       return buildBookingWhatsAppUrl({
         phoneNumber,
@@ -37,9 +47,10 @@ export default function WhatsAppBookingButton({
         title,
         location,
         price,
-        propertyUrl: urlToUse || propertyUrl,
+        propertyUrl: getCanonicalPropertyUrl(urlToUse),
       });
     }
+    if (initialWhatsappUrl) return initialWhatsappUrl;
     return "";
   };
 
@@ -52,7 +63,8 @@ export default function WhatsAppBookingButton({
       // Ignore background analytics error
     }
     if (typeof window !== "undefined") {
-      const liveHref = getUrl(window.location.href);
+      const livePropertyUrl = `${window.location.origin}/property/${propertyId}`;
+      const liveHref = getUrl(livePropertyUrl);
       if (liveHref) {
         e.currentTarget.href = liveHref;
       }
