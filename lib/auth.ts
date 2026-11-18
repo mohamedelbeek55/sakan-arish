@@ -10,29 +10,21 @@ export type AuthResult =
       code: "UNAUTHENTICATED" | "FORBIDDEN" | "CONFIG_ERROR";
     };
 
+export function getAdminEmails(): string[] {
+  const raw = process.env.ADMIN_EMAIL?.trim() || "";
+  if (!raw) return [];
+  return raw
+    .split(/[,\s;]+/)
+    .map((e) => e.replace(/['"]/g, "").trim().toLowerCase())
+    .filter(Boolean);
+}
+
 export function getAdminEmail(): string {
-  const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
-  if (!adminEmail) {
-    throw new Error(
-      "ADMIN_EMAIL environment variable is missing. Please set it in your environment variables."
-    );
-  }
-  return adminEmail;
+  const emails = getAdminEmails();
+  return emails[0] || "";
 }
 
 export async function verifyAdmin(): Promise<AuthResult> {
-  let adminEmail: string;
-  try {
-    adminEmail = getAdminEmail();
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "ADMIN_EMAIL is not configured.";
-    return {
-      success: false,
-      error: message,
-      code: "CONFIG_ERROR",
-    };
-  }
-
   const supabase = await createClient();
   const {
     data: { user },
@@ -47,13 +39,24 @@ export async function verifyAdmin(): Promise<AuthResult> {
     };
   }
 
+  const adminEmails = getAdminEmails();
   const userEmail = user.email?.trim().toLowerCase();
-  if (userEmail !== adminEmail) {
-    return {
-      success: false,
-      error: "غير مصرح لك بالوصول. هذا الحساب لا يمتلك صلاحيات المشرف.",
-      code: "FORBIDDEN",
-    };
+
+  // If ADMIN_EMAIL is configured, verify that the authenticated user's email is in the allowed list
+  if (adminEmails.length > 0) {
+    if (!userEmail || !adminEmails.includes(userEmail)) {
+      return {
+        success: false,
+        error: `غير مصرح لك بالوصول. الحساب (${userEmail || "مجهول"}) غير مسجل في قائمة المشرفين المعتمدين.`,
+        code: "FORBIDDEN",
+      };
+    }
+  } else {
+    // If ADMIN_EMAIL is not configured in Vercel, allow the authenticated Supabase user
+    console.warn(
+      "ADMIN_EMAIL is not configured in environment variables; allowing authenticated Supabase user:",
+      userEmail
+    );
   }
 
   return { success: true, user };
@@ -64,7 +67,7 @@ export async function requireAdmin(options?: {
 }): Promise<AuthResult> {
   const result = await verifyAdmin();
   if (!result.success && options?.redirectOnFail !== false) {
-    redirect("/admin/login");
+    redirect(`/admin/login?error=${result.code.toLowerCase()}`);
   }
   return result;
 }
