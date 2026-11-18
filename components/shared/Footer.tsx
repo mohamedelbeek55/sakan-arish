@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { MapPin, MessageSquare, Shield } from "lucide-react";
+import { MapPin, MessageSquare } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 export default function Footer() {
@@ -64,14 +64,6 @@ export default function Footer() {
                   className="text-slate-600 hover:text-[#0F766E] transition-colors"
                 >
                   إضافة عقار جديد
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/admin/login"
-                  className="text-slate-600 hover:text-[#0F766E] transition-colors flex items-center gap-1"
-                >
-                  <Shield className="h-3.5 w-3.5" /> لوحة إدارة المنصة
                 </Link>
               </li>
             </ul>

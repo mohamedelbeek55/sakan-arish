@@ -5,7 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Menu,
   X,
-  Shield,
   LogOut,
   Inbox,
   Plus,
@@ -13,7 +12,6 @@ import {
   ExternalLink,
   MapPin,
   CheckCircle2,
-  Lock,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -23,26 +21,14 @@ export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [pendingCount, setPendingCount] = useState<number>(0);
 
   const isAdminRoute = pathname?.startsWith("/admin");
   const isLoginPage = pathname === "/admin/login";
 
   useEffect(() => {
-    const supabase = createClient();
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAdmin(!!session);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAdmin(!!session);
-    });
-
     if (isAdminRoute) {
+      const supabase = createClient();
       supabase
         .from("submissions")
         .select("*", { count: "exact", head: true })
@@ -53,16 +39,11 @@ export default function Navbar() {
           }
         });
     }
-
-    return () => {
-      subscription.unsubscribe();
-    };
   }, [isAdminRoute]);
 
   const handleLogout = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
-    setIsAdmin(false);
     setMobileMenuOpen(false);
     router.push("/admin/login");
     router.refresh();
@@ -283,28 +264,11 @@ export default function Navbar() {
     <>
       {/* Top Announcement Bar (Stitch design) */}
       <aside className="bg-[#0D3B4C] text-white py-2 px-4 text-center text-xs border-b border-white/10">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <div className="max-w-7xl mx-auto flex items-center justify-center">
           <span className="inline-flex items-center gap-2 font-medium">
             <CheckCircle2 className="h-4 w-4 text-[#D97706]" />
             جميع العقارات المعروضة مفحوصة وموثقة لطلاب وطالبات الجامعات في العريش
           </span>
-          <div className="hidden md:flex items-center gap-4 text-white/80">
-            {isAdmin ? (
-              <Link
-                href="/admin/dashboard"
-                className="hover:text-white transition-colors flex items-center gap-1 font-semibold text-xs"
-              >
-                <Shield className="h-3.5 w-3.5 text-[#2DD4BF]" /> لوحة التحكم الإدارية
-              </Link>
-            ) : (
-              <Link
-                href="/admin/login"
-                className="hover:text-white transition-colors flex items-center gap-1 text-xs font-medium"
-              >
-                <Lock className="h-3.5 w-3.5 text-white/70" /> بوابة المشرفين
-              </Link>
-            )}
-          </div>
         </div>
       </aside>
 
@@ -366,29 +330,6 @@ export default function Navbar() {
               </Button>
             </Link>
 
-            {isAdmin && (
-              <div className="hidden md:flex items-center gap-2 mr-2 pr-2 border-r border-slate-200">
-                <Link href="/admin/dashboard">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-slate-300 text-[#0D3B4C] rounded-xl text-xs font-bold gap-1"
-                  >
-                    <Shield className="h-3.5 w-3.5" />
-                    لوحة التحكم
-                  </Button>
-                </Link>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={handleLogout}
-                  className="text-rose-600 hover:bg-rose-50 rounded-xl text-xs font-bold"
-                >
-                  <LogOut className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            )}
-
             {/* Mobile Menu Toggle */}
             <Button
               variant="ghost"
@@ -446,44 +387,6 @@ export default function Navbar() {
                   أضف عقارك كسكن للطلاب
                 </Button>
               </Link>
-
-              {isAdmin ? (
-                <div className="flex gap-2">
-                  <Link
-                    href="/admin/dashboard"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex-1"
-                  >
-                    <Button
-                      variant="outline"
-                      className="w-full border-slate-300 text-[#0D3B4C] text-xs font-bold rounded-xl h-10 gap-1.5"
-                    >
-                      <Shield className="h-4 w-4" />
-                      لوحة المشرف
-                    </Button>
-                  </Link>
-                  <Button
-                    variant="outline"
-                    onClick={handleLogout}
-                    className="border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-bold rounded-xl h-10 px-3"
-                  >
-                    <LogOut className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <Link
-                  href="/admin/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Button
-                    variant="ghost"
-                    className="w-full text-slate-500 hover:text-slate-800 text-xs font-medium rounded-xl h-9 gap-1.5"
-                  >
-                    <Lock className="h-3.5 w-3.5" />
-                    بوابة المشرفين
-                  </Button>
-                </Link>
-              )}
             </div>
           </div>
         )}
