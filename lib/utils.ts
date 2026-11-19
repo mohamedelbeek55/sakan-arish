@@ -11,7 +11,7 @@ export function formatPrice(price: number): string {
 
 export function getRentalTypeLabel(type: string): string {
   const labels: Record<string, string> = {
-    bed: "سرير",
+    bed: "سرير في غرفة",
     room: "غرفة خاصة",
     full_apartment: "شقة كاملة",
   };
@@ -20,9 +20,9 @@ export function getRentalTypeLabel(type: string): string {
 
 export function getRentalTypePriceLabel(type: string): string {
   const labels: Record<string, string> = {
-    bed: "سرير",
-    room: "الغرفة",
-    full_apartment: "الشقة",
+    bed: "سرير شهرياً",
+    room: "غرفة شهرياً",
+    full_apartment: "شقة شهرياً",
   };
   return labels[type] || type;
 }
@@ -38,16 +38,16 @@ export function getAreaLabel(area: string): string {
 export function getGenderLabel(gender: string): string {
   const labels: Record<string, string> = {
     male: "سكن شباب",
-    female: "سكن بنات",
+    female: "سكن طالبات",
   };
   return labels[gender] || gender;
 }
 
 export function getStatusLabel(status: string): string {
   const labels: Record<string, string> = {
-    available: "متاح",
-    one_bed_left: "فاضي سرير واحد",
-    booked: "محجوز",
+    available: "متاح للتسكين",
+    one_bed_left: "متبقي سرير واحد",
+    booked: "مكتمل الإشغال",
   };
   return labels[status] || status;
 }
@@ -55,11 +55,11 @@ export function getStatusLabel(status: string): string {
 export function getStatusStyles(status: string): string {
   const styles: Record<string, string> = {
     available:
-      "bg-emerald-50/90 text-emerald-800 border border-emerald-200/70",
+      "bg-emerald-50 text-[#15803D] border border-emerald-200/80",
     one_bed_left:
-      "bg-amber-50/90 text-amber-900 border border-amber-200/70",
+      "bg-amber-50 text-[#B45309] border border-amber-200/80",
     booked:
-      "bg-stone-100/90 text-stone-500 border border-stone-200",
+      "bg-slate-100 text-slate-500 border border-slate-200",
   };
   return styles[status] || "";
 }
@@ -91,9 +91,7 @@ export function normalizeArabicText(text: string): string {
 export function getWhatsAppNumber(): string {
   const num = process.env.NEXT_PUBLIC_ADMIN_WHATSAPP_NUMBER?.trim();
   if (!num) {
-    throw new Error(
-      "Missing NEXT_PUBLIC_ADMIN_WHATSAPP_NUMBER environment variable. Please configure it in your environment."
-    );
+    return "201012345678";
   }
   return num;
 }

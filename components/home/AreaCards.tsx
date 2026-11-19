@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { GraduationCap, MapPin, Waves, Building } from "lucide-react";
+import { GraduationCap, Landmark } from "lucide-react";
 
 interface AreaCardsProps {
   currentArea?: string;
@@ -24,117 +24,83 @@ export default function AreaCards({
     } else {
       params.set("area", area);
     }
-    router.replace(`/?${params.toString()}`, { scroll: false });
+    router.replace(`/?${params.toString()}#browse-listings`, { scroll: false });
   };
 
   const isMasaeed = currentArea === "al_masaeed";
   const isDahiya = currentArea === "al_dahiya";
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 pt-2">
-      {/* 1. Al-Masaeed Card */}
-      <button
-        type="button"
-        onClick={() => handleSelectArea("al_masaeed")}
-        className={`group relative text-right p-5 rounded-2xl border transition-all duration-200 cursor-pointer ${
-          isMasaeed
-            ? "border-sky-800 bg-sky-50/70 shadow-sm ring-2 ring-sky-800/15"
-            : "border-stone-200/80 bg-white hover:border-stone-300 hover:shadow-xs"
-        }`}
-      >
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="text-lg sm:text-xl font-bold text-stone-900 group-hover:text-sky-900 transition-colors">
-                المساعيد
-              </span>
-              <span className="inline-flex items-center rounded-md bg-sky-100/80 px-2 py-0.5 text-xs font-semibold text-sky-900">
-                جامعة سيناء
-              </span>
-            </div>
-            <p className="text-xs text-stone-500 leading-relaxed">
-              شارع أسيوط، شاطئ البحر، والمطاعم والكافيهات
-            </p>
-          </div>
-
+    <div id="universities" className="max-w-3xl mx-auto my-4 w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Campus 1: Sinai University (Al-Masaeed) */}
+        <button
+          type="button"
+          onClick={() => handleSelectArea("al_masaeed")}
+          className={`flex items-center gap-4 p-4 rounded-2xl border text-right transition-all duration-200 group cursor-pointer ${
+            isMasaeed
+              ? "border-2 border-[#0F766E] bg-white shadow-md ring-2 ring-[#0F766E]/15"
+              : "border-slate-200 bg-white hover:border-[#0F766E]/60 hover:shadow-xs"
+          }`}
+        >
           <div
-            className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl transition-colors ${
+            className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 ${
               isMasaeed
-                ? "bg-sky-800 text-white"
-                : "bg-stone-100 text-stone-600 group-hover:bg-sky-50 group-hover:text-sky-800"
+                ? "bg-[#0F766E]/15 text-[#0F766E]"
+                : "bg-slate-100 text-[#0D3B4C] group-hover:bg-[#0F766E]/10 group-hover:text-[#0F766E]"
             }`}
           >
-            <Waves className="h-5 w-5" />
+            <GraduationCap className="h-7 w-7" />
           </div>
-        </div>
-
-        <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
-          <span
-            className={`font-semibold ${
-              isMasaeed ? "text-sky-900 font-bold" : "text-stone-600"
-            }`}
-          >
-            {isMasaeed ? "✓ معروض سكنات المساعيد" : "تصفّح سكنات المساعيد"}
-          </span>
-          {typeof masaeedCount === "number" && (
-            <span className="text-stone-400 font-mono text-[11px]">
-              {masaeedCount} سكن
-            </span>
-          )}
-        </div>
-      </button>
-
-      {/* 2. Al-Dahiya Card */}
-      <button
-        type="button"
-        onClick={() => handleSelectArea("al_dahiya")}
-        className={`group relative text-right p-5 rounded-2xl border transition-all duration-200 cursor-pointer ${
-          isDahiya
-            ? "border-emerald-800 bg-emerald-50/70 shadow-sm ring-2 ring-emerald-800/15"
-            : "border-stone-200/80 bg-white hover:border-stone-300 hover:shadow-xs"
-        }`}
-      >
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
+          <div>
             <div className="flex items-center gap-2">
-              <span className="text-lg sm:text-xl font-bold text-stone-900 group-hover:text-emerald-900 transition-colors">
-                الضاحية
-              </span>
-              <span className="inline-flex items-center rounded-md bg-emerald-100/80 px-2 py-0.5 text-xs font-semibold text-emerald-900">
-                جامعة العريش
-              </span>
+              <h3 className="font-extrabold text-sm sm:text-base text-[#0D3B4C]">
+                جامعة سيناء — فرع العريش
+              </h3>
+              {isMasaeed && (
+                <span className="w-2 h-2 rounded-full bg-[#0F766E]"></span>
+              )}
             </div>
-            <p className="text-xs text-stone-500 leading-relaxed">
-              وسط المدينة، الكليات، سكن هادئ ومواصلات قريبة
+            <p className="text-xs text-slate-500 mt-0.5">
+              حي المساعيد • شارع البحر • {masaeedCount ?? 0} سكن متاح
             </p>
           </div>
+        </button>
 
+        {/* Campus 2: Arish University (Al-Dahiya) */}
+        <button
+          type="button"
+          onClick={() => handleSelectArea("al_dahiya")}
+          className={`flex items-center gap-4 p-4 rounded-2xl border text-right transition-all duration-200 group cursor-pointer ${
+            isDahiya
+              ? "border-2 border-[#0F766E] bg-white shadow-md ring-2 ring-[#0F766E]/15"
+              : "border-slate-200 bg-white hover:border-[#0F766E]/60 hover:shadow-xs"
+          }`}
+        >
           <div
-            className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl transition-colors ${
+            className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 ${
               isDahiya
-                ? "bg-emerald-800 text-white"
-                : "bg-stone-100 text-stone-600 group-hover:bg-emerald-50 group-hover:text-emerald-800"
+                ? "bg-[#0F766E]/15 text-[#0F766E]"
+                : "bg-slate-100 text-[#0D3B4C] group-hover:bg-[#0F766E]/10 group-hover:text-[#0F766E]"
             }`}
           >
-            <Building className="h-5 w-5" />
+            <Landmark className="h-7 w-7" />
           </div>
-        </div>
-
-        <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
-          <span
-            className={`font-semibold ${
-              isDahiya ? "text-emerald-900 font-bold" : "text-stone-600"
-            }`}
-          >
-            {isDahiya ? "✓ معروض سكنات الضاحية" : "تصفّح سكنات الضاحية"}
-          </span>
-          {typeof dahiyaCount === "number" && (
-            <span className="text-stone-400 font-mono text-[11px]">
-              {dahiyaCount} سكن
-            </span>
-          )}
-        </div>
-      </button>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="font-extrabold text-sm sm:text-base text-[#0D3B4C]">
+                جامعة العريش — الضاحية
+              </h3>
+              {isDahiya && (
+                <span className="w-2 h-2 rounded-full bg-[#0F766E]"></span>
+              )}
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              حي الضاحية • وسط البلد • {dahiyaCount ?? 0} سكن متاح
+            </p>
+          </div>
+        </button>
+      </div>
     </div>
   );
 }

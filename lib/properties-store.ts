@@ -18,98 +18,110 @@ function extractStoragePath(imageUrl: string): string | null {
 export async function getAllProperties(options?: {
   forAdmin?: boolean;
 }): Promise<Property[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("properties")
-    .select("*")
-    .order("created_at", { ascending: false });
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("properties")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("Database error fetching properties:", error);
-    throw new Error(`تعذر جلب السكنات من قاعدة البيانات: ${error.message}`);
-  }
-
-  const list: Property[] = (data || []).map((row) => ({
-    ...(row as Property),
-    owner_phone: null,
-  }));
-
-  // Admin query: attach owner_phone from the private table
-  if (options?.forAdmin) {
-    try {
-      const { data: privateRows } = await supabase
-        .from("property_private")
-        .select("property_id, owner_phone");
-
-      if (privateRows && privateRows.length > 0) {
-        const phoneMap = new Map<string, string | null>(
-          privateRows.map((r: { property_id: string; owner_phone: string | null }) => [
-            r.property_id,
-            r.owner_phone,
-          ])
-        );
-        return list.map((item) => ({
-          ...item,
-          owner_phone: phoneMap.get(item.id) || null,
-        }));
-      }
-    } catch (privErr) {
-      console.warn("Could not fetch property_private:", privErr);
+    if (error) {
+      console.error("Database error fetching properties:", error);
+      return [];
     }
-    return list;
-  }
 
-  // Public query: strictly never select/return owner_phone
-  return list.map((item) => {
-    const { owner_phone: _hidden, ...safeItem } = item;
-    return safeItem as Property;
-  });
+    const list: Property[] = (data || []).map((row) => ({
+      ...(row as Property),
+      owner_phone: null,
+    }));
+
+    // Admin query: attach owner_phone from the private table
+    if (options?.forAdmin) {
+      try {
+        const { data: privateRows } = await supabase
+          .from("property_private")
+          .select("property_id, owner_phone");
+
+        if (privateRows && privateRows.length > 0) {
+          const phoneMap = new Map<string, string | null>(
+            privateRows.map((r: { property_id: string; owner_phone: string | null }) => [
+              r.property_id,
+              r.owner_phone,
+            ])
+          );
+          return list.map((item) => ({
+            ...item,
+            owner_phone: phoneMap.get(item.id) || null,
+          }));
+        }
+      } catch (privErr) {
+        console.warn("Could not fetch property_private:", privErr);
+      }
+      return list;
+    }
+
+    // Public query: strictly never select/return owner_phone
+    return list.map((item) => {
+      const safeItem = { ...item };
+      delete safeItem.owner_phone;
+      return safeItem as Property;
+    });
+  } catch (err) {
+    console.error("Critical error in getAllProperties:", err);
+    return [];
+  }
 }
 
 export async function getPropertyById(
   id: string,
   options?: { forAdmin?: boolean }
 ): Promise<Property | null> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("properties")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("properties")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
 
-  if (error) {
-    console.error(`Database error fetching property [${id}]:`, error);
-    throw new Error(`تعذر جلب بيانات السكن: ${error.message}`);
-  }
-
-  if (!data) return null;
-
-  const item: Property = {
-    ...(data as Property),
-    owner_phone: null,
-  };
-
-  // Admin query: fetch owner_phone from private table
-  if (options?.forAdmin) {
-    try {
-      const { data: priv } = await supabase
-        .from("property_private")
-        .select("owner_phone")
-        .eq("property_id", id)
-        .maybeSingle();
-
-      return {
-        ...item,
-        owner_phone: priv?.owner_phone || null,
-      };
-    } catch {
-      return item;
+    if (error) {
+      console.error(`Database error fetching property [${id}]:`, error);
+      return null;
     }
-  }
 
-  // Public query: strictly never expose owner_phone
-  const { owner_phone: _hidden, ...safeItem } = item;
-  return safeItem as Property;
+    if (!data) return null;
+
+    const item: Property = {
+      ...(data as Property),
+      owner_phone: null,
+    };
+
+    // Admin query: fetch owner_phone from private table
+    if (options?.forAdmin) {
+      try {
+        const { data: priv } = await supabase
+          .from("property_private")
+          .select("owner_phone")
+          .eq("property_id", id)
+          .maybeSingle();
+
+        return {
+          ...item,
+          owner_phone: priv?.owner_phone || null,
+        };
+      } catch {
+        return item;
+      }
+    }
+
+    // Public query: strictly never expose owner_phone
+    const safeItem = { ...item };
+    delete safeItem.owner_phone;
+    return safeItem as Property;
+  } catch (err) {
+    console.error(`Critical error in getPropertyById [${id}]:`, err);
+    return null;
+  }
 }
 
 export async function upsertProperty(
@@ -117,7 +129,8 @@ export async function upsertProperty(
 ): Promise<{ success: boolean; property?: Property; error?: string }> {
   try {
     const supabase = await createClient();
-    const { id, owner_phone, whatsapp_clicks, ...rawSupabaseData } = propertyData;
+    const { id, owner_phone, whatsapp_clicks: _clicks, ...rawSupabaseData } = propertyData;
+    void _clicks;
 
     // Derive status automatically from available_beds, total_beds, and rental_type
     const autoStatus = derivePropertyStatus(

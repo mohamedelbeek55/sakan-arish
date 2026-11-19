@@ -13,7 +13,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { createClient } from "@/lib/supabase/client";
 import { useState } from "react";
 
 import { deletePropertyAction } from "@/app/actions/property";

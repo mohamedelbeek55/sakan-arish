@@ -1,70 +1,121 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
-  Building2,
-  CheckCircle,
+  MessageSquare,
+  Building,
   Home,
-  Loader2,
-  MapPin,
-  Phone,
-  ShieldCheck,
+  Bed,
+  CheckCircle2,
+  ChevronLeft,
   User,
-  ArrowRight,
-  Sparkles,
+  MapPin,
+  Check,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { submitPropertyAction } from "@/app/actions/submission";
 import { getWhatsAppNumber } from "@/lib/utils";
 
-const formSchema = z.object({
-  owner_name: z.string().min(2, "يرجى إدخال اسمك الكريم"),
-  owner_phone: z.string().min(10, "يرجى إدخال رقم هاتف صحيح"),
-  title: z.string().min(3, "يرجى كتابة عنوان مختصر للسكن"),
-  area: z.enum(["al_masaeed", "al_dahiya"], {
-    message: "يرجى اختيار المنطقة",
-  }),
-  gender: z.enum(["male", "female"], {
-    message: "يرجى تحديد الفئة",
-  }),
-  rental_type: z.enum(["bed", "room", "full_apartment"], {
-    message: "يرجى تحديد نوع الإيجار",
-  }),
-  price: z.number({ message: "السعر مطلوب" }).positive("السعر يجب أن يكون أكبر من صفر"),
-  rooms_count: z.number().int().min(1, "عدد الغرف يجب أن يكون 1 على الأقل"),
-  total_beds: z.number().int().min(1, "إجمالي الأسرّة يجب أن يكون 1 على الأقل"),
-  available_beds: z.number().int().min(0, "الأسرّة المتاحة لا يمكن أن تكون سالبة"),
-  walking_minutes_to_university: z
-    .number()
-    .int()
-    .min(0)
-    .max(120)
-    .optional(),
-  location_desc: z.string().optional(),
-  description: z.string().optional(),
-  hp_website: z.string().optional(),
-});
+const formSchema = z
+  .object({
+    owner_name: z
+      .string()
+      .trim()
+      .min(2, "يرجى كتابة اسم صاحب السكن بالكامل (حرفين على الأقل)"),
+    area: z.enum(["sinai_masaeed", "arish_dahiya"], {
+      message: "يرجى اختيار الجامعة أو المنطقة الأقرب",
+    }),
+    accommodation_type: z.enum(["full_apartment", "private_room", "shared_bed"], {
+      message: "يرجى اختيار نوع السكن",
+    }),
+    target_audience: z.enum(["male", "female", "both"], {
+      message: "يرجى تحديد الفئة المناسبة للسكن",
+    }),
+    price: z
+      .number({ message: "يرجى كتابة الإيجار الشهري" })
+      .positive("الإيجار يجب أن يكون أكبر من صفر"),
+    available_beds: z
+      .number()
+      .int("يجب أن يكون رقماً صحيحاً")
+      .positive("عدد الأسرة المتاحة يجب أن يكون 1 على الأقل")
+      .optional(),
+    occupants_count: z
+      .number()
+      .int("يجب أن يكون رقماً صحيحاً")
+      .positive("عدد الأفراد يجب أن يكون 1 على الأقل")
+      .optional(),
+    additional_details: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.accommodation_type === "shared_bed") {
+        return typeof data.available_beds === "number" && data.available_beds >= 1;
+      }
+      return true;
+    },
+    {
+      message: "يرجى تحديد عدد الأسرة المتاحة في الغرفة المشتركة",
+      path: ["available_beds"],
+    }
+  );
 
 type FormValues = z.infer<typeof formSchema>;
 
+const areaLabels: Record<string, string> = {
+  sinai_masaeed: "جامعة سيناء – المساعيد",
+  arish_dahiya: "جامعة العريش – الضاحية",
+};
+
+const accommodationLabels: Record<string, string> = {
+  full_apartment: "شقة كاملة",
+  private_room: "غرفة مستقلة",
+  shared_bed: "سرير في غرفة مشتركة",
+};
+
+const audienceLabels: Record<string, string> = {
+  male: "طلاب",
+  female: "طالبات",
+  both: "طلاب وطالبات",
+};
+
+function buildWhatsAppMessage(data: FormValues): string {
+  const lines: string[] = [
+    "السلام عليكم، أرغب في إضافة سكن على منصة سكن طلاب العريش.",
+    "",
+    "بيانات السكن:",
+    "",
+    `اسم صاحب السكن: ${data.owner_name.trim()}`,
+    `الجامعة الأقرب: ${areaLabels[data.area] || data.area}`,
+    `نوع السكن: ${accommodationLabels[data.accommodation_type] || data.accommodation_type}`,
+    `السكن مناسب لـ: ${audienceLabels[data.target_audience] || data.target_audience}`,
+    `الإيجار الشهري: ${data.price} جنيه`,
+  ];
+
+  if (data.accommodation_type === "shared_bed" && data.available_beds) {
+    lines.push(`عدد الأسرة المتاحة: ${data.available_beds}`);
+  } else if (data.accommodation_type === "private_room" && data.occupants_count) {
+    lines.push(`عدد الأفراد المناسب للغرفة: ${data.occupants_count}`);
+  }
+
+  if (data.additional_details && data.additional_details.trim()) {
+    lines.push(`تفاصيل إضافية: ${data.additional_details.trim()}`);
+  }
+
+  lines.push("", "أرجو التواصل معي لاستكمال إجراءات إضافة السكن.");
+
+  return lines.join("\n");
+}
+
 export default function ListYourPropertyPage() {
-  const [isPending, startTransition] = useTransition();
-  const [submitted, setSubmitted] = useState(false);
-  const [serverError, setServerError] = useState<string | null>(null);
+  const [submittedUrl, setSubmittedUrl] = useState<string | null>(null);
+  const [submittedMessage, setSubmittedMessage] = useState<string | null>(null);
 
   const {
     register,
@@ -76,344 +127,493 @@ export default function ListYourPropertyPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       owner_name: "",
-      owner_phone: "",
-      title: "",
-      area: "al_masaeed",
-      gender: "male",
-      rental_type: "bed",
-      price: 1500,
-      rooms_count: 3,
-      total_beds: 6,
-      available_beds: 6,
-      walking_minutes_to_university: 7,
-      location_desc: "",
-      description: "",
-      hp_website: "",
+      area: "sinai_masaeed",
+      accommodation_type: "full_apartment",
+      target_audience: "male",
+      price: 1300,
+      available_beds: 2,
+      occupants_count: 1,
+      additional_details: "",
     },
   });
 
   const watchedArea = watch("area");
-  const watchedGender = watch("gender");
-  const watchedRentalType = watch("rental_type");
-
-  let whatsappNumber = "";
-  try {
-    whatsappNumber = getWhatsAppNumber();
-  } catch {
-    // Graceful fallback if env is missing
-  }
+  const watchedAccommodationType = watch("accommodation_type");
+  const watchedTargetAudience = watch("target_audience");
 
   const onSubmit = (data: FormValues) => {
-    setServerError(null);
-    startTransition(async () => {
-      const result = await submitPropertyAction(data);
-      if (result.success) {
-        setSubmitted(true);
-      } else {
-        setServerError(result.error || "حدث خطأ أثناء إرسال الطلب. يرجى المحاولة لاحقاً.");
-      }
-    });
+    const rawNumber = getWhatsAppNumber();
+    const cleanNumber = rawNumber.replace(/\D/g, "") || "201012345678";
+    const message = buildWhatsAppMessage(data);
+    const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
+
+    setSubmittedMessage(message);
+    setSubmittedUrl(whatsappUrl);
+
+    // Open WhatsApp directly
+    if (typeof window !== "undefined") {
+      window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+    }
   };
 
-  if (submitted) {
+  // Screen: Success / Direct WhatsApp Trigger
+  if (submittedUrl && submittedMessage) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:px-8 text-center space-y-6">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-[#166534] border border-emerald-200/80 shadow-2xs">
-          <CheckCircle className="h-10 w-10 text-[#166534]" />
-        </div>
-        <div className="space-y-2">
-          <h1 className="text-2xl font-black text-stone-900 sm:text-3xl">
-            تم استلام بيانات سكنك بنجاح! 🎉
-          </h1>
-          <p className="text-stone-600 max-w-md mx-auto leading-relaxed text-sm">
-            شكراً لثقتك بنا. سيقوم فريق «سكن طلاب العريش» بمراجعة بيانات السكن والتواصل معك لتأكيده وعرضه مباشرة أمام آلاف الطلاب.
-          </p>
-        </div>
-
-        {whatsappNumber && (
-          <div className="p-5 rounded-2xl border border-emerald-200/80 bg-[#F0FDF4] max-w-md mx-auto space-y-3 shadow-2xs">
-            <p className="text-xs font-bold text-[#166534]">
-              هل ترغب في إرسال صور وفيديوهات السكن لنا الآن مباشرة؟
+      <main className="flex-1 py-12 px-4 sm:px-6 lg:px-8 max-w-2xl mx-auto w-full text-right">
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-md p-6 sm:p-10 space-y-8">
+          <div className="text-center space-y-3">
+            <div className="w-16 h-16 rounded-full bg-emerald-50 text-[#16A34A] flex items-center justify-center mx-auto shadow-xs">
+              <CheckCircle2 className="h-9 w-9" />
+            </div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-[#16A34A] text-xs font-bold">
+              <Check className="h-3.5 w-3.5" />
+              تم تجهيز رسالة الواتساب بنجاح
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-[#0D3B4C]">
+              بيانات السكن جاهزة للإرسال
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
+              تم تجهيز رسالة الواتساب بكافة تفاصيل السكن للتواصل مع المشرف العام. إذا لم يفتح تطبيق واتساب تلقائياً، اضغط على الزر أدناه لإرسال الرسالة.
             </p>
+          </div>
+
+          {/* Primary WhatsApp Action */}
+          <div className="space-y-3">
             <a
-              href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-                "السلام عليكم، قمت للتو بتقديم طلب إضافة سكن على المنصة وأرغب في إرسال الصور والتفاصيل."
-              )}`}
+              href={submittedUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#20BD5A] shadow-xs cursor-pointer"
+              className="w-full py-4 px-6 rounded-2xl bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-sm sm:text-base shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
-              مراسلتنا عبر واتساب لإرسال الصور
+              <MessageSquare className="h-5 w-5" />
+              <span>فتح محادثة واتساب مع المشرف الآن</span>
             </a>
+            <p className="text-[11px] text-center text-slate-400">
+              سيتم فتح تطبيق واتساب مباشرة مع تجهيز الرسالة، اضغط على زر الإرسال (Send) داخل المحادثة.
+            </p>
           </div>
-        )}
 
-        <div className="pt-4">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-sm font-bold text-stone-600 hover:text-[#0369A1] transition-colors"
-          >
-            <ArrowRight className="h-4 w-4" />
-            العودة للصفحة الرئيسية
-          </Link>
+          {/* Message Preview Box */}
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 text-right space-y-2">
+            <h3 className="text-xs font-bold text-[#0D3B4C] flex items-center gap-1.5">
+              <span>معاينة نص الرسالة المرسلة:</span>
+            </h3>
+            <pre className="text-xs text-slate-700 whitespace-pre-wrap font-sans leading-relaxed bg-white p-3.5 rounded-xl border border-slate-200/80">
+              {submittedMessage}
+            </pre>
+          </div>
+
+          {/* Secondary Actions */}
+          <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setSubmittedUrl(null);
+                setSubmittedMessage(null);
+              }}
+              className="w-full sm:w-auto rounded-xl border-slate-300 text-slate-700 text-xs font-bold h-10 gap-1.5"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              <span>تعديل البيانات أو إضافة سكن آخر</span>
+            </Button>
+
+            <Link
+              href="/"
+              className="w-full sm:w-auto text-center text-xs font-bold text-slate-500 hover:text-[#0D3B4C] transition-colors py-2"
+            >
+              العودة لتصفح السكنات
+            </Link>
+          </div>
         </div>
-      </div>
+      </main>
     );
   }
 
+  // Screen: Simplified Submission Form
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8 space-y-8">
-      {/* Header */}
-      <div className="text-center space-y-3">
-        <div className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 border border-sky-200/80 px-3.5 py-1 text-xs font-bold text-[#0369A1]">
-          <Sparkles className="h-3.5 w-3.5" />
-          أصحاب الشقق والسكنات في العريش
+    <main className="flex-1 py-10 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 w-full text-right space-y-8">
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+        <Link href="/" className="hover:text-[#0D3B4C] transition-colors">
+          الرئيسية
+        </Link>
+        <ChevronLeft className="h-3.5 w-3.5" />
+        <span className="text-[#0D3B4C] font-bold">إضافة سكن جديد</span>
+      </nav>
+
+      {/* Intro Header */}
+      <div className="bg-gradient-to-r from-[#0D3B4C] via-[#0D3B4C] to-[#0F766E] text-white p-6 sm:p-8 rounded-3xl shadow-sm space-y-3">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#16A34A] text-white text-xs font-bold shadow-xs">
+          <MessageSquare className="h-3.5 w-3.5" />
+          تواصل مباشر مع المشرف عبر واتساب
         </div>
-        <h1 className="text-2xl sm:text-3xl font-black text-stone-900">
-          أعلن عن سكنك معنا واصل لآلاف الطلاب
+        <h1 className="text-2xl sm:text-3xl font-black">
+          أضف عقارك كسكن لطلاب العريش
         </h1>
-        <p className="text-xs sm:text-sm text-stone-500 max-w-xl mx-auto leading-relaxed">
-          اعرض شقتك أو غرفتك لطلاب جامعة سيناء وجامعة العريش مباشرة، بدون أي وسيط وبدون أي عمولة. املأ النموذج وسيتم التواصل معك لاعتماده.
+        <p className="text-xs sm:text-sm text-white/90 leading-relaxed max-w-2xl">
+          املأ البيانات الأساسية للسكن، وسنساعدك في عرضه على طلاب العريش. بعد إرسال بياناتك عبر واتساب، ستتواصل معك إدارة المنصة لمراجعة السكن.
         </p>
       </div>
 
-      {/* Form */}
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="rounded-2xl border border-[#EBE6DC] bg-white p-6 sm:p-8 shadow-2xs space-y-6"
-      >
-        {serverError && (
-          <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-xs font-semibold text-rose-700 leading-relaxed text-right">
-            {serverError}
-          </div>
-        )}
-
-        {/* Honeypot field (hidden from humans) */}
-        <div style={{ display: "none" }} aria-hidden="true">
-          <input
-            type="text"
-            tabIndex={-1}
-            autoComplete="off"
-            {...register("hp_website")}
-          />
-        </div>
-
-        {/* 1. Owner Info */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 pb-2.5 border-b border-[#EBE6DC]/80">
-            <User className="h-4 w-4 text-[#0369A1]" />
-            <h2 className="text-sm font-black text-stone-900">بيانات المالك أو المسؤول</h2>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="owner_name" className="text-xs font-bold text-stone-700">
-                الاسم الكريم
-              </Label>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* Form Container */}
+        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-6">
+          {/* 1. Owner Name */}
+          <div className="space-y-1.5">
+            <Label htmlFor="owner_name" className="text-xs font-bold text-slate-800">
+              اسم صاحب السكن بالكامل *
+            </Label>
+            <div className="relative flex items-center">
+              <User className="absolute right-3.5 text-slate-400 h-4 w-4 pointer-events-none" />
               <Input
                 id="owner_name"
-                placeholder="مثال: الحاج محمد"
-                className="h-10 rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 placeholder:text-stone-400 focus:bg-white focus:border-[#0284C7] focus:ring-2 focus:ring-[#0284C7]/15 transition"
+                required
+                placeholder="مثال: أحمد محمد"
+                className="pr-11 pl-4 h-11 rounded-xl border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:border-[#0D3B4C]"
                 {...register("owner_name")}
               />
-              {errors.owner_name && (
-                <p className="text-xs text-rose-600 font-medium">{errors.owner_name.message}</p>
-              )}
             </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="owner_phone" className="text-xs font-bold text-stone-700">
-                رقم الهاتف / الواتساب
-              </Label>
-              <Input
-                id="owner_phone"
-                placeholder="01XXXXXXXXX"
-                dir="ltr"
-                className="h-10 rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 placeholder:text-stone-400 focus:bg-white focus:border-[#0284C7] focus:ring-2 focus:ring-[#0284C7]/15 transition text-right"
-                {...register("owner_phone")}
-              />
-              {errors.owner_phone && (
-                <p className="text-xs text-rose-600 font-medium">{errors.owner_phone.message}</p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* 2. Property Specifications */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 pb-2.5 border-b border-[#EBE6DC]/80">
-            <Home className="h-4 w-4 text-[#0369A1]" />
-            <h2 className="text-sm font-black text-stone-900">مواصفات السكن</h2>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="title" className="text-xs font-bold text-stone-700">
-              عنوان الإعلان المختصر
-            </Label>
-            <Input
-              id="title"
-              placeholder="مثال: شقة 3 غرف مفروشة لوكس قريبة من جامعة سيناء"
-              className="h-10 rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 placeholder:text-stone-400 focus:bg-white focus:border-[#0284C7] focus:ring-2 focus:ring-[#0284C7]/15 transition"
-              {...register("title")}
-            />
-            {errors.title && (
-              <p className="text-xs text-rose-600 font-medium">{errors.title.message}</p>
+            {errors.owner_name && (
+              <p className="text-xs text-rose-600 font-medium">{errors.owner_name.message}</p>
             )}
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold text-stone-700">المنطقة</Label>
-              <Select
-                value={watchedArea}
-                onValueChange={(val: "al_masaeed" | "al_dahiya") =>
-                  setValue("area", val)
-                }
+          {/* 2. Nearest University / Area */}
+          <div className="space-y-2">
+            <Label className="text-xs font-bold text-slate-800">
+              الجامعة أو المنطقة الأقرب *
+            </Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setValue("area", "sinai_masaeed")}
+                className={`p-3.5 rounded-2xl border text-right transition-all flex items-center justify-between cursor-pointer ${
+                  watchedArea === "sinai_masaeed"
+                    ? "border-[#0F766E] bg-teal-50/50 ring-2 ring-[#0F766E]/20 text-[#0D3B4C]"
+                    : "border-slate-200 bg-white hover:border-slate-300 text-slate-700"
+                }`}
               >
-                <SelectTrigger className="h-10 rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40">
-                  <SelectValue placeholder="اختر المنطقة" />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl border-[#EBE6DC]">
-                  <SelectItem value="al_masaeed">المساعيد (جامعة سيناء)</SelectItem>
-                  <SelectItem value="al_dahiya">الضاحية (جامعة العريش)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                <div className="flex items-center gap-2.5">
+                  <div
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                      watchedArea === "sinai_masaeed"
+                        ? "bg-[#0F766E] text-white"
+                        : "bg-slate-100 text-slate-500"
+                    }`}
+                  >
+                    <MapPin className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <span className="font-bold text-xs sm:text-sm block">
+                      جامعة سيناء – المساعيد
+                    </span>
+                    <span className="text-[11px] text-slate-500 block">
+                      منطقة المساعيد وشارع البحر
+                    </span>
+                  </div>
+                </div>
+                {watchedArea === "sinai_masaeed" && (
+                  <Check className="h-4 w-4 text-[#0F766E] shrink-0" />
+                )}
+              </button>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold text-stone-700">نوع السكن</Label>
-              <Select
-                value={watchedGender}
-                onValueChange={(val: "male" | "female") =>
-                  setValue("gender", val)
-                }
+              <button
+                type="button"
+                onClick={() => setValue("area", "arish_dahiya")}
+                className={`p-3.5 rounded-2xl border text-right transition-all flex items-center justify-between cursor-pointer ${
+                  watchedArea === "arish_dahiya"
+                    ? "border-[#0F766E] bg-teal-50/50 ring-2 ring-[#0F766E]/20 text-[#0D3B4C]"
+                    : "border-slate-200 bg-white hover:border-slate-300 text-slate-700"
+                }`}
               >
-                <SelectTrigger className="h-10 rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40">
-                  <SelectValue placeholder="اختر الفئة" />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl border-[#EBE6DC]">
-                  <SelectItem value="male">سكن شباب</SelectItem>
-                  <SelectItem value="female">سكن بنات</SelectItem>
-                </SelectContent>
-              </Select>
+                <div className="flex items-center gap-2.5">
+                  <div
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                      watchedArea === "arish_dahiya"
+                        ? "bg-[#0F766E] text-white"
+                        : "bg-slate-100 text-slate-500"
+                    }`}
+                  >
+                    <MapPin className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <span className="font-bold text-xs sm:text-sm block">
+                      جامعة العريش – الضاحية
+                    </span>
+                    <span className="text-[11px] text-slate-500 block">
+                      منطقة ضاحية السلام والمحافظة
+                    </span>
+                  </div>
+                </div>
+                {watchedArea === "arish_dahiya" && (
+                  <Check className="h-4 w-4 text-[#0F766E] shrink-0" />
+                )}
+              </button>
             </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold text-stone-700">نوع الإيجار</Label>
-              <Select
-                value={watchedRentalType}
-                onValueChange={(val: "bed" | "room" | "full_apartment") =>
-                  setValue("rental_type", val)
-                }
-              >
-                <SelectTrigger className="h-10 rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40">
-                  <SelectValue placeholder="اختر نوع الإيجار" />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl border-[#EBE6DC]">
-                  <SelectItem value="bed">سرير</SelectItem>
-                  <SelectItem value="room">غرفة خاصة</SelectItem>
-                  <SelectItem value="full_apartment">شقة كاملة</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {errors.area && (
+              <p className="text-xs text-rose-600 font-medium">{errors.area.message}</p>
+            )}
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="price" className="text-xs font-bold text-stone-700">
-                السعر المتوقع (ج.م)
+          {/* 3. Accommodation Type */}
+          <div className="space-y-2">
+            <Label className="text-xs font-bold text-slate-800">
+              نوع السكن *
+            </Label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Option 1: Full Apartment */}
+              <button
+                type="button"
+                onClick={() => setValue("accommodation_type", "full_apartment")}
+                className={`p-4 rounded-2xl border text-right transition-all flex flex-col justify-between gap-3 cursor-pointer ${
+                  watchedAccommodationType === "full_apartment"
+                    ? "border-[#0F766E] bg-teal-50/50 ring-2 ring-[#0F766E]/20 text-[#0D3B4C]"
+                    : "border-slate-200 bg-white hover:border-slate-300 text-slate-700"
+                }`}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <div
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                      watchedAccommodationType === "full_apartment"
+                        ? "bg-[#0F766E] text-white"
+                        : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    <Building className="h-5 w-5" />
+                  </div>
+                  {watchedAccommodationType === "full_apartment" && (
+                    <Check className="h-4 w-4 text-[#0F766E]" />
+                  )}
+                </div>
+                <div>
+                  <strong className="font-bold text-sm block">شقة كاملة</strong>
+                  <span className="text-[11px] text-slate-500 mt-0.5 block leading-relaxed">
+                    الشقة بالكامل معروضة للإيجار
+                  </span>
+                </div>
+              </button>
+
+              {/* Option 2: Private Room */}
+              <button
+                type="button"
+                onClick={() => setValue("accommodation_type", "private_room")}
+                className={`p-4 rounded-2xl border text-right transition-all flex flex-col justify-between gap-3 cursor-pointer ${
+                  watchedAccommodationType === "private_room"
+                    ? "border-[#0F766E] bg-teal-50/50 ring-2 ring-[#0F766E]/20 text-[#0D3B4C]"
+                    : "border-slate-200 bg-white hover:border-slate-300 text-slate-700"
+                }`}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <div
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                      watchedAccommodationType === "private_room"
+                        ? "bg-[#0F766E] text-white"
+                        : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    <Home className="h-5 w-5" />
+                  </div>
+                  {watchedAccommodationType === "private_room" && (
+                    <Check className="h-4 w-4 text-[#0F766E]" />
+                  )}
+                </div>
+                <div>
+                  <strong className="font-bold text-sm block">غرفة مستقلة</strong>
+                  <span className="text-[11px] text-slate-500 mt-0.5 block leading-relaxed">
+                    غرفة خاصة لطالب (مرافق مشتركة)
+                  </span>
+                </div>
+              </button>
+
+              {/* Option 3: Bed in Shared Room */}
+              <button
+                type="button"
+                onClick={() => setValue("accommodation_type", "shared_bed")}
+                className={`p-4 rounded-2xl border text-right transition-all flex flex-col justify-between gap-3 cursor-pointer ${
+                  watchedAccommodationType === "shared_bed"
+                    ? "border-[#0F766E] bg-teal-50/50 ring-2 ring-[#0F766E]/20 text-[#0D3B4C]"
+                    : "border-slate-200 bg-white hover:border-slate-300 text-slate-700"
+                }`}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <div
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                      watchedAccommodationType === "shared_bed"
+                        ? "bg-[#0F766E] text-white"
+                        : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    <Bed className="h-5 w-5" />
+                  </div>
+                  {watchedAccommodationType === "shared_bed" && (
+                    <Check className="h-4 w-4 text-[#0F766E]" />
+                  )}
+                </div>
+                <div>
+                  <strong className="font-bold text-sm block">سرير في غرفة مشتركة</strong>
+                  <span className="text-[11px] text-slate-500 mt-0.5 block leading-relaxed">
+                    سرير فردي داخل غرفة مشتركة
+                  </span>
+                </div>
+              </button>
+            </div>
+            {errors.accommodation_type && (
+              <p className="text-xs text-rose-600 font-medium">
+                {errors.accommodation_type.message}
+              </p>
+            )}
+          </div>
+
+          {/* Conditional Field: Available beds when Bed in Shared Room */}
+          {watchedAccommodationType === "shared_bed" && (
+            <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80 space-y-2 transition-all">
+              <Label htmlFor="available_beds" className="text-xs font-bold text-slate-900 block">
+                عدد الأسرة المتاحة *
               </Label>
+              <Input
+                id="available_beds"
+                type="number"
+                min={1}
+                required
+                placeholder="مثال: 2"
+                className="h-11 rounded-xl border-amber-200 bg-white text-slate-900 font-bold focus:border-[#0D3B4C]"
+                {...register("available_beds", { valueAsNumber: true })}
+              />
+              <span className="text-[11px] text-slate-600 block">
+                حدد عدد الأسرة الشاغرة المتاحة للتسكين حالياً في هذه الغرفة.
+              </span>
+              {errors.available_beds && (
+                <p className="text-xs text-rose-600 font-medium">
+                  {errors.available_beds.message}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Conditional Field: Suitable occupants when Private Room */}
+          {watchedAccommodationType === "private_room" && (
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 transition-all">
+              <Label htmlFor="occupants_count" className="text-xs font-bold text-slate-800 block">
+                عدد الأفراد المناسب للغرفة (اختياري)
+              </Label>
+              <Input
+                id="occupants_count"
+                type="number"
+                min={1}
+                placeholder="مثال: فرد واحد (أو 2)"
+                className="h-11 rounded-xl border-slate-200 bg-white text-slate-900 focus:border-[#0D3B4C]"
+                {...register("occupants_count", { valueAsNumber: true })}
+              />
+              <span className="text-[11px] text-slate-500 block">
+                هل الغرفة مناسبة لطالب واحد أم يمكن أن تستوعب طالبين؟
+              </span>
+            </div>
+          )}
+
+          {/* 4. Target Audience */}
+          <div className="space-y-2">
+            <Label className="text-xs font-bold text-slate-800">
+              السكن مناسب لمين؟ (الفئة المستهدفة) *
+            </Label>
+            <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
+              <button
+                type="button"
+                onClick={() => setValue("target_audience", "male")}
+                className={`py-3 px-3 rounded-2xl border text-center transition-all cursor-pointer ${
+                  watchedTargetAudience === "male"
+                    ? "border-[#0D3B4C] bg-[#0D3B4C] text-white font-bold shadow-xs"
+                    : "border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-medium"
+                }`}
+              >
+                <span className="text-xs sm:text-sm block">طلاب (شباب)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setValue("target_audience", "female")}
+                className={`py-3 px-3 rounded-2xl border text-center transition-all cursor-pointer ${
+                  watchedTargetAudience === "female"
+                    ? "border-[#0D3B4C] bg-[#0D3B4C] text-white font-bold shadow-xs"
+                    : "border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-medium"
+                }`}
+              >
+                <span className="text-xs sm:text-sm block">طالبات (بنات)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setValue("target_audience", "both")}
+                className={`py-3 px-3 rounded-2xl border text-center transition-all cursor-pointer ${
+                  watchedTargetAudience === "both"
+                    ? "border-[#0D3B4C] bg-[#0D3B4C] text-white font-bold shadow-xs"
+                    : "border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-medium"
+                }`}
+              >
+                <span className="text-xs sm:text-sm block">طلاب وطالبات</span>
+              </button>
+            </div>
+            {errors.target_audience && (
+              <p className="text-xs text-rose-600 font-medium">
+                {errors.target_audience.message}
+              </p>
+            )}
+          </div>
+
+          {/* 5. Monthly Rent */}
+          <div className="space-y-1.5">
+            <Label htmlFor="price" className="text-xs font-bold text-slate-800">
+              الإيجار الشهري بالجنيه المصري *
+            </Label>
+            <div className="relative flex items-center">
               <Input
                 id="price"
                 type="number"
-                className="h-10 rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 placeholder:text-stone-400 focus:bg-white focus:border-[#0284C7] focus:ring-2 focus:ring-[#0284C7]/15 transition"
+                required
+                min={1}
+                placeholder="مثال: 1300"
+                className="pl-20 pr-4 h-11 rounded-xl border-slate-200 bg-slate-50 text-slate-900 font-bold text-base focus:bg-white focus:border-[#0D3B4C]"
                 {...register("price", { valueAsNumber: true })}
               />
-              {errors.price && (
-                <p className="text-xs text-rose-600 font-medium">{errors.price.message}</p>
-              )}
+              <span className="absolute left-4 text-xs font-bold text-slate-500 pointer-events-none">
+                ج.م / شهرياً
+              </span>
             </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="rooms_count" className="text-xs font-bold text-stone-700">
-                عدد الغرف
-              </Label>
-              <Input
-                id="rooms_count"
-                type="number"
-                className="h-10 rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 placeholder:text-stone-400 focus:bg-white focus:border-[#0284C7] focus:ring-2 focus:ring-[#0284C7]/15 transition"
-                {...register("rooms_count", { valueAsNumber: true })}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="total_beds" className="text-xs font-bold text-stone-700">
-                إجمالي الأسرّة
-              </Label>
-              <Input
-                id="total_beds"
-                type="number"
-                className="h-10 rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 placeholder:text-stone-400 focus:bg-white focus:border-[#0284C7] focus:ring-2 focus:ring-[#0284C7]/15 transition"
-                {...register("total_beds", { valueAsNumber: true })}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="walking_minutes_to_university" className="text-xs font-bold text-stone-700">
-                دقائق السير للجامعة
-              </Label>
-              <Input
-                id="walking_minutes_to_university"
-                type="number"
-                placeholder="مثال: 5"
-                className="h-10 rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 placeholder:text-stone-400 focus:bg-white focus:border-[#0284C7] focus:ring-2 focus:ring-[#0284C7]/15 transition"
-                {...register("walking_minutes_to_university", {
-                  valueAsNumber: true,
-                })}
-              />
-            </div>
+            {errors.price && (
+              <p className="text-xs text-rose-600 font-medium">{errors.price.message}</p>
+            )}
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="location_desc" className="text-xs font-bold text-stone-700">
-              العنوان أو علامة مميزة
-            </Label>
-            <Input
-              id="location_desc"
-              placeholder="مثال: المساعيد، شارع أسيوط بجوار صيدلية كذا"
-              className="h-10 rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 placeholder:text-stone-400 focus:bg-white focus:border-[#0284C7] focus:ring-2 focus:ring-[#0284C7]/15 transition"
-              {...register("location_desc")}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="description" className="text-xs font-bold text-stone-700">
-              ملاحظات ومميزات إضافية
+          {/* 6. Optional Additional Details */}
+          <div className="space-y-1.5 pt-2 border-t border-slate-100">
+            <Label htmlFor="additional_details" className="text-xs font-bold text-slate-800">
+              تفاصيل إضافية (اختياري)
             </Label>
             <Textarea
-              id="description"
+              id="additional_details"
               rows={3}
-              placeholder="مثال: الشقة بها تكييف، غسالة أوتوماتيك، إنترنت فائق السرعة، عمارة هادئة..."
-              className="rounded-xl border-[#EBE6DC] bg-[#FAF7F0]/40 text-stone-900 placeholder:text-stone-400 focus:bg-white focus:border-[#0284C7] focus:ring-2 focus:ring-[#0284C7]/15 transition"
-              {...register("description")}
+              placeholder="مثال: الغرفة مفروشة وقريبة من الجامعة، تكييف، واي فاي، سخان، عداد كهرباء كارت..."
+              className="p-3.5 rounded-xl border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:border-[#0D3B4C] text-xs leading-relaxed"
+              {...register("additional_details")}
             />
           </div>
         </div>
 
-        <Button
-          type="submit"
-          disabled={isPending}
-          className="w-full h-11 bg-[#0369A1] hover:bg-[#0284C7] text-white font-bold text-base rounded-xl transition shadow-xs cursor-pointer"
-        >
-          {isPending ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin ml-2" />
-              جاري إرسال الطلب...
-            </>
-          ) : (
-            "إرسال السكن للمراجعة والإعلان"
-          )}
-        </Button>
+        {/* Submit Section */}
+        <div className="bg-white p-6 sm:p-8 rounded-3xl border-2 border-[#16A34A]/40 shadow-xs space-y-4">
+          <Button
+            type="submit"
+            className="w-full h-13 rounded-2xl bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-base shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <MessageSquare className="h-5 w-5" />
+            <span>إرسال بيانات السكن عبر واتساب</span>
+          </Button>
+
+          <p className="text-center text-[11px] sm:text-xs text-slate-500 leading-relaxed">
+            بالضغط على الزر، سيتم فتح محادثة مباشرة مع مشرف منصة سكن طلاب العريش عبر واتساب مع رسالة جاهزة تتضمن كافة البيانات لمراجعتها واعتماد السكن.
+          </p>
+        </div>
       </form>
-    </div>
+    </main>
   );
 }

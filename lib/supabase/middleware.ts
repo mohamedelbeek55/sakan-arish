@@ -48,12 +48,9 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Redirect authenticated users away from login page
-  if (isAuth && request.nextUrl.pathname === "/admin/login") {
-    const url = request.nextUrl.clone();
-    url.pathname = "/admin/dashboard";
-    return NextResponse.redirect(url);
-  }
+  // NOTE: We deliberately do NOT auto-redirect from /admin/login to /admin/dashboard here.
+  // Doing so when an authenticated user is rejected by requireAdmin() in dashboard creates
+  // an infinite 307 redirect loop (net::ERR_TOO_MANY_REDIRECTS).
 
   return supabaseResponse;
 }

@@ -7,7 +7,6 @@ import {
   upsertProperty,
   updatePropertyStatus,
   deleteProperty,
-  getPropertyById,
   recordWhatsAppClick,
 } from "@/lib/properties-store";
 import { requireAdmin } from "@/lib/auth";

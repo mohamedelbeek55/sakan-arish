@@ -7,20 +7,33 @@ import Footer from "@/components/shared/Footer";
 const cairo = Cairo({
   variable: "--font-cairo",
   subsets: ["arabic", "latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700", "800", "900"],
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "سكن طلاب العريش | ابحث عن سكنك بسهولة",
+  title: "سكن طلاب العريش | البوابة الأولى لسكن طلاب جامعة سيناء وجامعة العريش",
   description:
-    "منصة سكن طلاب العريش تساعدك في إيجاد السكن المناسب بالقرب من جامعة سيناء وجامعة العريش. تصفّح الإعلانات، شاهد الصور والفيديوهات، وتواصل مباشرة مع صاحب السكن عبر واتساب.",
+    "سكنك الجامعي المثالي في العريش بضغطة زر. شقق وغرف مفروشة لطلبة جامعة سيناء وجامعة العريش - بدون سماسرة وتواصل مباشر مع المالك عبر واتساب.",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico" },
+    ],
+    apple: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+  },
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="ar" dir="rtl" className={`${cairo.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col font-sans bg-[#FBF9F5] text-stone-900 selection:bg-sky-100 selection:text-sky-900 overflow-x-hidden w-full max-w-full">
+      <body className="min-h-full flex flex-col font-sans bg-[#F8FAFC] text-[#0F172A] selection:bg-teal-100 selection:text-teal-900 overflow-x-hidden w-full max-w-full">
         <Navbar />
         <main className="flex-1 w-full max-w-full overflow-x-hidden">{children}</main>
         <Footer />
