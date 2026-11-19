@@ -15,6 +15,15 @@ export const metadata: Metadata = {
   title: "سكن طلاب العريش | البوابة الأولى لسكن طلاب جامعة سيناء وجامعة العريش",
   description:
     "سكنك الجامعي المثالي في العريش بضغطة زر. شقق وغرف مفروشة لطلبة جامعة سيناء وجامعة العريش - بدون سماسرة وتواصل مباشر مع المالك عبر واتساب.",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico" },
+    ],
+    apple: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+  },
 };
 
 export default function RootLayout({
